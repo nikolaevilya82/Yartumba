@@ -12,13 +12,29 @@ from app.models.catalog import (
     ProductAttribute,
     ProductConfiguration,
     ConfigurationItem,
+    FurnitureMaterial,
 )
 
-# Компоненты (заготовка для будущего)
-# from app.models.components import ...
+# Товары (конкретные изделия)
+from app.models.goods import (
+    Bookshelf,
+    BookshelfPart,
+    Nightstand,
+    NightstandDrawer,
+    Dresser,
+    DresserDrawer,
+)
 
-# Продажи (заготовка)
-# from app.models.sales import ...
+# Материалы
+from app.models.materials import (
+    SheetMaterial,
+    SheetMaterialDecor,
+    SlideGuide,
+    Hinge,
+    EdgeMaterial,
+    Support,
+    WallMount,
+)
 
 __all__ = [
     # Catalog
@@ -31,4 +47,21 @@ __all__ = [
     "ProductAttribute",
     "ProductConfiguration",
     "ConfigurationItem",
+    # Goods
+    "Bookshelf",
+    "BookshelfPart",
+    "Nightstand",
+    "NightstandDrawer",
+    "Dresser",
+    "DresserDrawer",
+    # Materials
+    "SheetMaterial",
+    "SheetMaterialDecor",
+    "SlideGuide",
+    "Hinge",
+    "EdgeMaterial",
+    "Support",
+    "WallMount",
+    # Material link
+    "FurnitureMaterial",
 ]
