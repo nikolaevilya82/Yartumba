@@ -11,13 +11,11 @@ from app.core.db_setup import Base
 class Bookshelf(Base):
     """
     Книжная полка / стеллаж.
-    Связана с деталями (полки, боковины, задняя стенка) и материалами.
     """
     __tablename__ = "bookshelves"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
-    # Ссылка на товар из каталога
     product_id = Column(
         UUID(as_uuid=True),
         ForeignKey("products.id", ondelete="SET NULL"),
@@ -25,51 +23,26 @@ class Bookshelf(Base):
         index=True
     )
     
-    # Размеры в мм
-    width = Column(Integer, nullable=False)    # Ширина
-    height = Column(Integer, nullable=False)   # Высота
-    depth = Column(Integer, nullable=False)    # Глубина
-    
-    # Количество полок
+    width = Column(Integer, nullable=False)
+    height = Column(Integer, nullable=False)
+    depth = Column(Integer, nullable=False)
+
     shelf_count = Column(Integer, nullable=False, default=3)
-    
-    # Тип: открытый / закрытый / комбинированный
-    shelf_type = Column(String(50), nullable=False, default="open")  # open, closed, combined
-    
-    # Связи
+    shelf_type = Column(String(50), nullable=False, default="open")
+
     product = relationship("Product", backref="bookshelf")
-    materials = relationship("BookshelfMaterial", back_populates="bookshelf", cascade="all, delete-orphan")
+    materials = relationship(
+        "FurnitureMaterial",
+        primaryjoin="and_(Bookshelf.id==foreign(FurnitureMaterial.furniture_id), "
+                    "FurnitureMaterial.furniture_type=='bookshelf')",
+        backref="bookshelf_ref",
+        cascade="all, delete-orphan",
+        viewonly=True
+    )
     parts = relationship("BookshelfPart", back_populates="bookshelf", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Bookshelf {self.width}x{self.height}x{self.depth}>"
-
-
-class BookshelfMaterial(Base):
-    """
-    Материалы для книжной полки.
-    Позволяет выбрать материал для корпуса и полок отдельно.
-    """
-    __tablename__ = "bookshelf_materials"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    bookshelf_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("bookshelves.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    
-    # Тип элемента: корпус, полки, задняя стенка
-    part_type = Column(String(50), nullable=False)  # body, shelf, back
-    
-    # Ссылка на материал (из справочника материалов)
-    material_id = Column(UUID(as_uuid=True), nullable=True)
-    
-    # Цвет (если применимо)
-    color_id = Column(UUID(as_uuid=True), nullable=True)
-
-    bookshelf = relationship("Bookshelf", back_populates="materials")
 
 
 class BookshelfPart(Base):
