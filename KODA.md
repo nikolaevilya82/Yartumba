@@ -17,9 +17,8 @@
 | `bookshelves` | Книжные полки |
 | `bookshelf_parts` | Детали полок (боковины, полки, задняя стенка) |
 | `nightstands` | Прикроватные тумбы |
-| `nightstand_drawers` | Ящики тумб |
 | `dressers` | Комоды |
-| `dresser_drawers` | Ящики комодов |
+| `drawers` | Универсальные выдвижные ящики |
 
 ### Материалы (пакет `app/models/materials/`)
 
@@ -58,9 +57,12 @@ from app.models.catalog import (
 # Товары
 from app.models.goods import (
     Bookshelf, BookshelfPart,
-    Nightstand, NightstandDrawer,
-    Dresser, DresserDrawer,
+    Nightstand,
+    Dresser,
 )
+
+# Компоненты
+from app.models.components import Drawer
 
 # Материалы
 from app.models.materials import (
@@ -92,6 +94,8 @@ app/
 │   │   ├── bookshelf.py
 │   │   ├── nightstand.py
 │   │   └── dresser.py
+│   ├── components/       # Компоненты
+│   │   └── drawer.py     # Универсальные ящики
 │   └── materials/        # Материалы и фурнитура
 │       ├── sheet_materials.py
 │       ├── hardware.py
@@ -110,7 +114,24 @@ app/
 2. **FurnitureMaterial** — универсальная связь, ссылается на все типы материалов
 3. **EdgeMaterial** имеет уникальный `sheet_material_id` (связь 1:1)
 4. **Товары** (Bookshelf, Nightstand, Dresser) имеют backref `product` на Product
-5. **Ящики и детали** имеют ForeignKey с `ondelete="CASCADE"`
+5. **Drawer** — универсальный ящик, связь через `furniture_type` + `furniture_id`
+6. **Ящики и детали** имеют ForeignKey с `ondelete="CASCADE"`
+
+---
+
+## Связи между таблицами
+
+| Родитель | Потомок | Тип связи |
+|----------|---------|-----------|
+| `SheetMaterial` | `EdgeMaterial` | 1:many |
+| `EdgeMaterial` | `SheetMaterial` | 1:1 (unique) |
+| `Drawer` | `SlideGuide` | many:1 |
+| `FurnitureMaterial` | `SheetMaterial` | many:1 |
+| `FurnitureMaterial` | `EdgeMaterial` | many:1 |
+| `FurnitureMaterial` | `SlideGuide` | many:1 |
+| `FurnitureMaterial` | `Hinge` | many:1 |
+| `FurnitureMaterial` | `Support` | many:1 |
+| `FurnitureMaterial` | `WallMount` | many:1 |
 
 ---
 
@@ -125,9 +146,14 @@ app/
 
 ---
 
-## Типы изделий (furniture_type в furniture_materials)
+## Типы изделий (furniture_type)
 
+**В FurnitureMaterial:**
 - `bookshelf` — Книжная полка
+- `nightstand` — Прикроватная тумба
+- `dresser` — Комод
+
+**В Drawer:**
 - `nightstand` — Прикроватная тумба
 - `dresser` — Комод
 

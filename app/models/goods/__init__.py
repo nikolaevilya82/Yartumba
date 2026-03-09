@@ -2,9 +2,10 @@
 Экспорт моделей товаров
 """
 from app.models.goods.bookshelf import Bookshelf, BookshelfPart
-from app.models.goods.nightstand import Nightstand, NightstandDrawer
-from app.models.goods.dresser import Dresser, DresserDrawer
+from app.models.goods.nightstand import Nightstand
+from app.models.goods.dresser import Dresser
 from app.models.catalog.material import FurnitureMaterial
+from app.models.components.drawer import Drawer
 from app.models.materials import (
     SheetMaterial,
     SlideGuide, Hinge,
@@ -18,12 +19,12 @@ __all__ = [
     "BookshelfPart",
     # Прикроватные тумбы
     "Nightstand",
-    "NightstandDrawer",
     # Комоды
     "Dresser",
-    "DresserDrawer",
     # Универсальная связь материалов
     "FurnitureMaterial",
+    # Выдвижные ящики
+    "Drawer",
     # Материалы
     "SheetMaterial",
     "SlideGuide",

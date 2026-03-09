@@ -25,8 +25,6 @@ class FurnitureMaterial(Base):
     # Тип элемента: body, shelf, facade, top, legs, back, drawer
     part_type = Column(String(50), nullable=False)
     
-    # === ССЫЛКИ НА МАТЕРИАЛЫ ===
-    
     # Листовой материал (для корпуса, полок, фасадов)
     sheet_material_id = Column(
         UUID(as_uuid=True),
@@ -78,7 +76,7 @@ class FurnitureMaterial(Base):
     # Количество (например, 4 ножки, 2 петли)
     quantity = Column(Integer, default=1)
     
-    # === СВЯЗИ ===
+    # Связи
     sheet_material = relationship("SheetMaterial", foreign_keys=[sheet_material_id])
     edge = relationship("EdgeMaterial", foreign_keys=[edge_id])
     slide_guide = relationship("SlideGuide", foreign_keys=[slide_guide_id])

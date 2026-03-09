@@ -32,46 +32,7 @@ class Nightstand(Base):
     leg_type = Column(String(50), nullable=False, default="standard")
     
     product = relationship("Product", backref="nightstand")
-    materials = relationship(
-        "FurnitureMaterial",
-        primaryjoin="and_(Nightstand.id==foreign(FurnitureMaterial.furniture_id), "
-                    "FurnitureMaterial.furniture_type=='nightstand')",
-        backref="nightstand_ref",
-        cascade="all, delete-orphan",
-        viewonly=True
-    )
-    drawers = relationship("NightstandDrawer", back_populates="nightstand", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Nightstand {self.width}x{self.height}x{self.depth}, {self.drawer_count} ящика>"
 
-
-class NightstandDrawer(Base):
-    """
-    Ящик прикроватной тумбы.
-    """
-    __tablename__ = "nightstand_drawers"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    nightstand_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("nightstands.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    
-    # Номер ящика (1, 2, 3...)
-    drawer_number = Column(Integer, nullable=False)
-    
-    # Внутренние размеры ящика в мм
-    inner_width = Column(Integer, nullable=True)
-    inner_height = Column(Integer, nullable=True)
-    inner_depth = Column(Integer, nullable=True)
-    
-    # Тип направляющих: роликовые, шариковые, полновыкатные
-    guide_type = Column(String(50), nullable=False, default="roller")
-    
-    # Есть ли доводчик
-    has_soft_close = Column(Boolean, default=False)
-
-    nightstand = relationship("Nightstand", back_populates="drawers")

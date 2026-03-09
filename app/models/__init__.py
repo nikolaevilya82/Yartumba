@@ -12,7 +12,6 @@ from app.models.catalog import (
     ProductAttribute,
     ProductConfiguration,
     ConfigurationItem,
-    FurnitureMaterial,
 )
 
 # Товары (конкретные изделия)
@@ -20,25 +19,23 @@ from app.models.goods import (
     Bookshelf,
     BookshelfPart,
     Nightstand,
-    NightstandDrawer,
     Dresser,
-    DresserDrawer,
 )
 
-# Материалы
-from app.models.materials import (
-    SheetMaterial,
-    SheetMaterialDecor,
-    SlideGuide,
-    Hinge,
-    EdgeMaterial,
-    Support,
-    WallMount,
-)
+# Компоненты
+from app.models.components import Drawer
 
 __all__ = [
     # Catalog
     "Category",
+    # Goods
+    "Bookshelf",
+    "BookshelfPart",
+    "Nightstand",
+    "Dresser",
+    # Components
+    "Drawer",
+    # Catalog (continued)
     "Product",
     "AttributeType",
     "SizeUnit",
@@ -47,21 +44,4 @@ __all__ = [
     "ProductAttribute",
     "ProductConfiguration",
     "ConfigurationItem",
-    # Goods
-    "Bookshelf",
-    "BookshelfPart",
-    "Nightstand",
-    "NightstandDrawer",
-    "Dresser",
-    "DresserDrawer",
-    # Materials
-    "SheetMaterial",
-    "SheetMaterialDecor",
-    "SlideGuide",
-    "Hinge",
-    "EdgeMaterial",
-    "Support",
-    "WallMount",
-    # Material link
-    "FurnitureMaterial",
 ]
