@@ -35,7 +35,11 @@ class ProductAttribute(Base):
     is_required = Column(Boolean, default=False)
     
     # Значение по умолчанию (id значения из attribute_values)
-    default_value_id = Column(UUID(as_uuid=True), nullable=True)
+    default_value_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("attribute_values.id", ondelete="SET NULL"),
+        nullable=True
+    )
     
     # Минимальное значение (для size-атрибутов) в мм
     min_value = Column(Integer, nullable=True)
