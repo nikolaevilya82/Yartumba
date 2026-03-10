@@ -71,7 +71,13 @@ class BookshelfPart(Base):
     # Количество таких деталей
     quantity = Column(Integer, nullable=False, default=1)
     
-    # Связь с компонентом (если есть)
-    component_id = Column(UUID(as_uuid=True), nullable=True)
+    # Связь с листовым материалом (для разных цветов деталей)
+    sheet_material_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("sheet_materials.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
 
     bookshelf = relationship("Bookshelf", back_populates="parts")
+    sheet_material = relationship("SheetMaterial")

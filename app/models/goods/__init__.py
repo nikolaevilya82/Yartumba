@@ -3,7 +3,7 @@
 """
 from app.models.goods.bookshelf import Bookshelf, BookshelfPart
 from app.models.goods.nightstand import Nightstand
-from app.models.goods.dresser import Dresser
+from app.models.goods.dresser import Dresser, DresserPart
 from app.models.catalog.material import FurnitureMaterial
 from app.models.components.drawer import Drawer
 from app.models.materials import (
@@ -21,6 +21,7 @@ __all__ = [
     "Nightstand",
     # Комоды
     "Dresser",
+    "DresserPart",
     # Универсальная связь материалов
     "FurnitureMaterial",
     # Выдвижные ящики

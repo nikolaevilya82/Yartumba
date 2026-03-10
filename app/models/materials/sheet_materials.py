@@ -50,6 +50,10 @@ class SheetMaterial(Base):
     
     # Связи
     edges = relationship("EdgeMaterial", back_populates="sheet_material", cascade="all, delete-orphan")
+    bookshelf_parts = relationship("BookshelfPart", back_populates="sheet_material")
+    dresser_parts = relationship("DresserPart", back_populates="sheet_material")
+    nightstand_parts = relationship("NightstandPart", back_populates="sheet_material")
+    drawer_parts = relationship("DrawerPart", back_populates="sheet_material")
 
     def __repr__(self):
         return f"<SheetMaterial {self.name}>"
