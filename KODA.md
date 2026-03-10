@@ -17,7 +17,9 @@
 | `bookshelves` | Книжные полки |
 | `bookshelf_parts` | Детали полок (боковины, полки, задняя стенка) |
 | `nightstands` | Прикроватные тумбы |
+| `nightstand_parts` | Детали тумб (боковины, полки, фасады) |
 | `dressers` | Комоды |
+| `dresser_parts` | Детали комодов (боковины, полки, фасады) |
 | `drawers` | Универсальные выдвижные ящики |
 
 ### Материалы (пакет `app/models/materials/`)
@@ -57,8 +59,8 @@ from app.models.catalog import (
 # Товары
 from app.models.goods import (
     Bookshelf, BookshelfPart,
-    Nightstand,
-    Dresser,
+    Nightstand, NightstandPart,
+    Dresser, DresserPart,
 )
 
 # Компоненты
@@ -92,8 +94,11 @@ app/
 │   │   └── material.py   # FurnitureMaterial
 │   ├── goods/            # Мебель
 │   │   ├── bookshelf.py
+│   │   ├── bookshelf_part.py
 │   │   ├── nightstand.py
-│   │   └── dresser.py
+│   │   ├── nightstand_part.py
+│   │   ├── dresser.py
+│   │   └── dresser_part.py
 │   ├── components/       # Компоненты
 │   │   └── drawer.py     # Универсальные ящики
 │   └── materials/        # Материалы и фурнитура
@@ -123,8 +128,12 @@ app/
 
 | Родитель | Потомок | Тип связи |
 |----------|---------|-----------|
-| `SheetMaterial` | `EdgeMaterial` | 1:many |
-| `EdgeMaterial` | `SheetMaterial` | 1:1 (unique) |
+| `Product` | `Bookshelf/Nightstand/Dresser` | 1:1 (FK) |
+| `Bookshelf` | `BookshelfPart` | 1:n (CASCADE) |
+| `Nightstand` | `NightstandPart` | 1:n (CASCADE) |
+| `Dresser` | `DresserPart` | 1:n (CASCADE) |
+| `SheetMaterial` | `EdgeMaterial` | 1:1 (unique) |
+| `SheetMaterial` | `BookshelfPart/NightstandPart/DresserPart` | 1:n |
 | `Drawer` | `SlideGuide` | many:1 |
 | `FurnitureMaterial` | `SheetMaterial` | many:1 |
 | `FurnitureMaterial` | `EdgeMaterial` | many:1 |

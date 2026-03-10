@@ -2,7 +2,7 @@
 Экспорт моделей товаров
 """
 from app.models.goods.bookshelf import Bookshelf, BookshelfPart
-from app.models.goods.nightstand import Nightstand
+from app.models.goods.nightstand import Nightstand, NightstandPart
 from app.models.goods.dresser import Dresser, DresserPart
 from app.models.catalog.material import FurnitureMaterial
 from app.models.components.drawer import Drawer
@@ -19,6 +19,7 @@ __all__ = [
     "BookshelfPart",
     # Прикроватные тумбы
     "Nightstand",
+    "NightstandPart",
     # Комоды
     "Dresser",
     "DresserPart",

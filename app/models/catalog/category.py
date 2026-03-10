@@ -1,5 +1,5 @@
 """
-Категории товаров: шкафы, столы, стулья, кровати и т.д.
+Категории товаров: тумбы, камоды и т.д.
 """
 import uuid
 from sqlalchemy import Column, String, Text, Integer
