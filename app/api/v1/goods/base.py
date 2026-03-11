@@ -1,0 +1,1 @@
+# Base goods service
