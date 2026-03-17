@@ -82,7 +82,8 @@ from app.models.materials import (
 ```
 app/
 ├── __init__.py           # Главный экспорт моделей
-├── models/
+├── main.py               # Приложение FastAPI
+├── models/               # Модели БД
 │   ├── __init__.py       # Экспорт всех моделей
 │   ├── catalog/          # Каталог (товары, атрибуты)
 │   │   ├── category.py
@@ -94,11 +95,8 @@ app/
 │   │   └── material.py   # FurnitureMaterial
 │   ├── goods/            # Мебель
 │   │   ├── bookshelf.py
-│   │   ├── bookshelf_part.py
 │   │   ├── nightstand.py
-│   │   ├── nightstand_part.py
-│   │   ├── dresser.py
-│   │   └── dresser_part.py
+│   │   └── dresser.py
 │   ├── components/       # Компоненты
 │   │   └── drawer.py     # Универсальные ящики
 │   └── materials/        # Материалы и фурнитура
@@ -107,9 +105,75 @@ app/
 │       ├── edge.py
 │       └── supports.py
 ├── api/                  # API эндпоинты
+│   └── v1/
+│       ├── router.py     # Главный роутер v1
+│       └── goods/
+│           ├── router.py          # Объединение товаров
+│           ├── dependencies.py    # get_db()
+│           ├── bookshelf/
+│           │   ├── routes.py      # CRUD эндпоинты
+│           │   └── schemas.py     # Pydantic схемы
+│           ├── nightstand/
+│           │   ├── routes.py
+│           │   └── schemas.py
+│           └── dresser/
+│               ├── routes.py
+│               └── schemas.py
 ├── services/             # Бизнес-логика
 └── core/                 # База, конфиг, DI
 ```
+
+---
+
+## API Endpoints
+
+### Bookshelf (книжные полки)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/v1/goods/bookshelf/` | Создать полку |
+| `GET` | `/v1/goods/bookshelf/` | Список полок |
+| `GET` | `/v1/goods/bookshelf/{id}` | Получить полку |
+| `GET` | `/v1/goods/bookshelf/{id}/full` | Полка + детали |
+| `PATCH` | `/v1/goods/bookshelf/{id}` | Обновить полку |
+| `DELETE` | `/v1/goods/bookshelf/{id}` | Удалить полку |
+| `POST` | `/v1/goods/bookshelf/{id}/parts` | Добавить деталь |
+| `GET` | `/v1/goods/bookshelf/{id}/parts` | Список деталей |
+| `GET` | `/v1/goods/bookshelf/{id}/parts/{part_id}` | Деталь по ID |
+| `PATCH` | `/v1/goods/bookshelf/{id}/parts/{part_id}` | Обновить деталь |
+| `DELETE` | `/v1/goods/bookshelf/{id}/parts/{part_id}` | Удалить деталь |
+
+### Nightstand (прикроватные тумбы)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/v1/goods/nightstand/` | Создать тумбу |
+| `GET` | `/v1/goods/nightstand/` | Список тумб |
+| `GET` | `/v1/goods/nightstand/{id}` | Получить тумбу |
+| `GET` | `/v1/goods/nightstand/{id}/full` | Тумба + детали |
+| `PATCH` | `/v1/goods/nightstand/{id}` | Обновить тумбу |
+| `DELETE` | `/v1/goods/nightstand/{id}` | Удалить тумбу |
+| `POST` | `/v1/goods/nightstand/{id}/parts` | Добавить деталь |
+| `GET` | `/v1/goods/nightstand/{id}/parts` | Список деталей |
+| `GET` | `/v1/goods/nightstand/{id}/parts/{part_id}` | Деталь по ID |
+| `PATCH` | `/v1/goods/nightstand/{id}/parts/{part_id}` | Обновить деталь |
+| `DELETE` | `/v1/goods/nightstand/{id}/parts/{part_id}` | Удалить деталь |
+
+### Dresser (комоды)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/v1/goods/dresser/` | Создать комод |
+| `GET` | `/v1/goods/dresser/` | Список комодов |
+| `GET` | `/v1/goods/dresser/{id}` | Получить комод |
+| `GET` | `/v1/goods/dresser/{id}/full` | Комод + детали |
+| `PATCH` | `/v1/goods/dresser/{id}` | Обновить комод |
+| `DELETE` | `/v1/goods/dresser/{id}` | Удалить комод |
+| `POST` | `/v1/goods/dresser/{id}/parts` | Добавить деталь |
+| `GET` | `/v1/goods/dresser/{id}/parts` | Список деталей |
+| `GET` | `/v1/goods/dresser/{id}/parts/{part_id}` | Деталь по ID |
+| `PATCH` | `/v1/goods/dresser/{id}/parts/{part_id}` | Обновить деталь |
+| `DELETE` | `/v1/goods/dresser/{id}/parts/{part_id}` | Удалить деталь |
 
 ---
 
@@ -121,6 +185,8 @@ app/
 4. **Товары** (Bookshelf, Nightstand, Dresser) имеют backref `product` на Product
 5. **Drawer** — универсальный ящик, связь через `furniture_type` + `furniture_id`
 6. **Ящики и детали** имеют ForeignKey с `ondelete="CASCADE"`
+7. **Общие схемы** — `GoodsBase`, `GoodsCreate`, `GoodsUpdate`, `GoodsResponse` вынесены в `bookshelf/schemas.py` и импортируются в Nightstand и Dresser
+8. **Документация** — доступна по `/docs` (Swagger) и `/redoc` (ReDoc)
 
 ---
 
@@ -129,6 +195,7 @@ app/
 | Родитель | Потомок | Тип связи |
 |----------|---------|-----------|
 | `Product` | `Bookshelf/Nightstand/Dresser` | 1:1 (FK) |
+| `Category` | `Product` | 1:n |
 | `Bookshelf` | `BookshelfPart` | 1:n (CASCADE) |
 | `Nightstand` | `NightstandPart` | 1:n (CASCADE) |
 | `Dresser` | `DresserPart` | 1:n (CASCADE) |
