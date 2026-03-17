@@ -244,3 +244,50 @@ app/
 - `legs` — Ножки
 - `back` — Задняя стенка
 - `drawer` — Ящик
+
+---
+
+## Фронтенд (React + Vite)
+
+### Структура
+
+```
+frontend/
+├── src/
+│   ├── App.jsx          # Главный компонент
+│   ├── App.css          # Стили App
+│   ├── index.css        # Глобальные стили
+│   ├── main.jsx         # Точка входа
+│   └── assets/          # Статические assets
+├── public/              # Публичные файлы
+├── package.json         # Зависимости
+└── vite.config.js       # Конфиг Vite
+```
+
+### Запуск
+
+```bash
+cd frontend
+npm install
+npm run dev      # Dev-сервер (http://localhost:5173)
+npm run build    # Сборка в prod
+npm run preview  # Превью prod-сборки
+```
+
+### Текущие товары на главной
+
+| Товар | Тип | Цена |
+|-------|-----|------|
+| Книжная полка | bookshelf | 8 500 ₽ |
+| Прикроватная тумба | nightstand | 5 200 ₽ |
+| Комод | dresser | 12 500 ₽ |
+
+### API для фронтенда
+
+Бэкенд API: `http://localhost:8000`
+
+- Bookshelf: `/v1/goods/bookshelf/`
+- Nightstand: `/v1/goods/nightstand/`
+- Dresser: `/v1/goods/dresser/`
+
+Документация: `/docs`
