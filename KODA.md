@@ -254,14 +254,100 @@ app/
 ```
 frontend/
 ├── src/
-│   ├── App.jsx          # Главный компонент
-│   ├── App.css          # Стили App
-│   ├── index.css        # Глобальные стили
-│   ├── main.jsx         # Точка входа
-│   └── assets/          # Статические assets
-├── public/              # Публичные файлы
-├── package.json         # Зависимости
-└── vite.config.js       # Конфиг Vite
+│   ├── core/               # Ядро (конфиги, типы, утилиты, константы)
+│   │   ├── config/         # Конфигурация
+│   │   │   ├── app.config.ts      # Настройки приложения
+│   │   │   ├── api.config.ts      # URL API, эндпоинты
+│   │   │   └── routes.config.ts   # Маршруты
+│   │   ├── constants/      # Константы
+│   │   │   ├── product.constants.ts      # Типы товаров, категории
+│   │   │   ├── configurator.constants.ts # Опции конфигуратора
+│   │   │   └── validation.constants.ts   # Валидация
+│   │   ├── types/          # TypeScript типы
+│   │   │   ├── product.types.ts        # Product, Furniture, Bookshelf...
+│   │   │   ├── configurator.types.ts   # Опции, Configuration
+│   │   │   ├── cart.types.ts           # Cart, CartItem, Order
+│   │   │   └── api.types.ts            # ApiResponse, Pagination
+│   │   ├── utils/          # Утилиты
+│   │   │   ├── price.utils.ts      # Форматирование цен
+│   │   │   ├── validation.utils.ts # Валидация форм
+│   │   │   ├── storage.utils.ts    # localStorage
+│   │   │   └── helpers.utils.ts    # Общие функции
+│   │   ├── assets/         # Статика
+│   │   ├── main.jsx        # Точка входа
+│   │   └── index.css       # Глобальные стили
+│   ├── api/                # API клиент и сервисы
+│   ├── hooks/              # Глобальные кастомные хуки
+│   ├── stores/             # Глобальное состояние
+│   ├── components/         # Переиспользуемые компоненты
+│   │   ├── ui/             # Базовые (Button, Input...)
+│   │   └── common/         # Общие приложения
+│   ├── modules/            # Функциональные модули
+│   │   ├── catalog/        # Каталог
+│   │   ├── bookshelf/      # Книжные полки
+│   │   ├── nightstand/     # Тумбы
+│   │   ├── dresser/        # Комоды
+│   │   └── cart/           # Корзина
+│   ├── layouts/            # Компоненты макетов
+│   ├── pages/              # Страницы
+│   │   ├── App.jsx         # Главный компонент
+│   │   └── App.css         # Стили App
+│   └── routes/             # Маршрутизация
+├── public/                 # Публичные файлы
+├── package.json            # Зависимости
+└── vite.config.js          # Конфиг Vite
+```
+
+### Импорты из core
+
+```typescript
+// Конфиги
+import { appConfig } from 'core/config/app.config';
+import { apiConfig, apiEndpoints, endpoints } from 'core/config/api.config';
+import { routes, routeNames } from 'core/config/routes.config';
+
+// Константы
+import { 
+  FurnitureType, 
+  furnitureTypeNames,
+  PartType,
+  CategorySlug 
+} from 'core/constants/product.constants';
+import { 
+  MaterialType, 
+  materialTypeNames,
+  configuratorDefaults 
+} from 'core/constants/configurator.constants';
+
+// Типы
+import type { 
+  Product, 
+  Bookshelf, 
+  Nightstand, 
+  Dresser,
+  FurniturePart 
+} from 'core/types/product.types';
+import type { 
+  MaterialOption, 
+  FurnitureConfiguration,
+  ConfiguratorOptions 
+} from 'core/types/configurator.types';
+import type { 
+  Cart, 
+  CartItem, 
+  Order 
+} from 'core/types/cart.types';
+import type { 
+  ApiResponse, 
+  PaginatedResponse,
+  PaginationParams 
+} from 'core/types/api.types';
+
+// Утилиты
+import { formatPrice, calculateDiscount } from 'core/utils/price.utils';
+import { isValidEmail, combineValidators } from 'core/utils/validation.utils';
+import { setItem, getItem, storageKeys } from 'core/utils/storage.utils';
+import { generateId, formatDate, debounce, clamp } from 'core/utils/helpers.utils';
 ```
 
 ### Запуск
