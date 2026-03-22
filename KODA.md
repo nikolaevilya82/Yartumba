@@ -277,6 +277,27 @@ frontend/
 │   │   ├── main.jsx        # Точка входа
 │   │   └── index.css       # Глобальные стили
 │   ├── api/                # API клиент и сервисы
+│   │   ├── client.ts       # Базовый HTTP клиент (fetch)
+│   │   ├── index.ts        # Главный экспорт
+│   │   ├── endpoints/      # Эндпоинты API
+│   │   │   ├── index.ts              # Ре-экспорт
+│   │   │   ├── types/                # Типы эндпоинтов
+│   │   │   ├── helpers/              # Утилиты для эндпоинтов
+│   │   │   ├── common.endpoints.ts   # Категории, материалы
+│   │   │   ├── configurator.endpoints.ts
+│   │   │   ├── cart.endpoints.ts
+│   │   │   ├── orders.endpoints.ts
+│   │   │   └── products/             # Товары
+│   │   │       ├── bookshelf.endpoints.ts
+│   │   │       ├── nightstand.endpoints.ts
+│   │   │       └── dresser.endpoints.ts
+│   │   └── services/        # API сервисы
+│   │       ├── bookshelf.service.ts
+│   │       ├── nightstand.service.ts
+│   │       ├── dresser.service.ts
+│   │       ├── configurator.service.ts
+│   │       ├── cart.service.ts
+│   │       └── order.service.ts
 │   ├── hooks/              # Глобальные кастомные хуки
 │   ├── stores/             # Глобальное состояние
 │   ├── components/         # Переиспользуемые компоненты
@@ -303,7 +324,7 @@ frontend/
 ```typescript
 // Конфиги
 import { appConfig } from 'core/config/app.config';
-import { apiConfig, apiEndpoints, endpoints } from 'core/config/api.config';
+import { apiConfig } from 'core/config/api.config';
 import { routes, routeNames } from 'core/config/routes.config';
 
 // Константы
@@ -348,6 +369,35 @@ import { formatPrice, calculateDiscount } from 'core/utils/price.utils';
 import { isValidEmail, combineValidators } from 'core/utils/validation.utils';
 import { setItem, getItem, storageKeys } from 'core/utils/storage.utils';
 import { generateId, formatDate, debounce, clamp } from 'core/utils/helpers.utils';
+```
+
+### Импорты из api
+
+```typescript
+// API клиент
+import { apiClient, createApiClient } from 'api/client';
+
+// Эндпоинты
+import { 
+  bookshelfEndpoints, 
+  nightstandEndpoints, 
+  dresserEndpoints,
+  configuratorEndpoints, 
+  cartEndpoints, 
+  orderEndpoints,
+  goodsEndpoints,
+  queryParams 
+} from 'api/endpoints';
+
+// Сервисы товаров
+import * as bookshelfService from 'api/services/bookshelf.service';
+import * as nightstandService from 'api/services/nightstand.service';
+import * as dresserService from 'api/services/dresser.service';
+
+// Сервисы
+import * as configuratorService from 'api/services/configurator.service';
+import * as cartService from 'api/services/cart.service';
+import * as orderService from 'api/services/order.service';
 ```
 
 ### Запуск
