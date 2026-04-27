@@ -477,6 +477,11 @@ frontend/
 │   └── utils/
 │       ├── render.tsx            # Кастомный render
 │       └── testIds.ts            # Тестовые ID
+├── tests/unit/core/utils/        # Unit тесты утилит
+│   ├── price.utils.test.ts       # 35 тестов
+│   ├── validation.utils.test.ts  # 47 тестов
+│   ├── storage.utils.test.ts     # 27 тестов
+│   └── helpers.utils.test.ts     # 55 тестов
 ├── vitest.config.ts
 ├── tsconfig.test.json
 └── package.json
@@ -495,6 +500,10 @@ npm run test:watch        # Режим наблюдения
 npm run test:ui           # UI режим
 npm run test:coverage     # Отчёт покрытия
 ```
+
+**Статистика фронтенд тестов:**
+- 113 unit тестов проходят ✅
+- Инфраструктура готова для компонентных тестов
 
 ---
 
@@ -776,6 +785,6 @@ alembic upgrade head
 | **Авторизация** | ⏸️ Не реализовано | 0% |
 | **Фронтенд (структура)** | 🟡 В разработке | 70% |
 | **Тесты бэкенда** | ✅ Готово | 130 тестов |
-| **Тесты фронтенда** | 🟡 Инфраструктура | Готово |
+| **Тесты фронтенда** | ✅ Unit тесты | 113 тестов |
 
-**Общий прогресс:** ~50-60%
+**Общий прогресс:** ~55-65%
