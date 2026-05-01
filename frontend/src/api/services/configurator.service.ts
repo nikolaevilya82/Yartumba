@@ -56,7 +56,7 @@ export async function getConfiguration(id: number): Promise<ApiResponse<SavedCon
 
 // Получить все сохранённые конфигурации пользователя
 export async function getMyConfigurations(): Promise<ApiResponse<SavedConfiguration[]>> {
-  return apiClient.get<ApiResponse<SavedConfiguration[]>>(endpoints.configurations);
+  return apiClient.get<ApiResponse<SavedConfiguration[]>>(configuratorEndpoints.configurations);
 }
 
 // Обновить конфигурацию
