@@ -74,7 +74,7 @@ npm run test tests/unit/core/utils/
 - 113 unit тестов утилит проходят ✅
 - 148 API тестов (client, endpoints, services) проходят ✅
 - 200 тестов сторов (UI, Cart, Configurator) проходят ✅
-- **Всего:** 461 тест ✅
+- **Всего:** 497 тестов ✅
 
 ## 🚀 Быстрый старт
 
@@ -127,10 +127,16 @@ Yartumba/
 │       │   │   ├── client.test.ts
 │       │   │   ├── endpoints/
 │       │   │   └── services/
-│       │   └── stores/         # Тесты сторов (200 тестов)
-│       │       ├── ui/
-│       │       ├── cart/
-│       │       └── configurator/
+│       │   ├── stores/         # Тесты сторов (200 тестов)
+│       │   │   ├── ui/
+│       │   │   ├── cart/
+│       │   │   └── configurator/
+│       │   └── hooks/          # Тесты хуков (36 тестов)
+│       │       ├── useDebounce.test.ts
+│       │       ├── useLocalStorage.test.ts
+│       │       ├── useMediaQuery.test.ts
+│       │       ├── useCart.test.ts
+│       │       └── useConfigurator.test.ts
 ├── KODA.md              # Контекст для AI-ассистента
 └── README.md            # Документация проекта
 ```
