@@ -128,11 +128,15 @@ app/
 │           ├── nightstand/
 │           │   ├── routes.py
 │           │   └── schemas.py
-│           └── dresser/
-│               ├── routes.py
-│               └── schemas.py
+│           ├── dresser/
+│           │   ├── routes.py
+│           │   └── schemas.py
+│           └── cart/
+│               ├── routes.py      # CRUD корзины
+│               └── schemas.py     # Pydantic схемы корзины
 ├── services/             # Бизнес-логика
-│   └── configurator_service.py  # Расчёт стоимости, валидация
+│   ├── configurator_service.py  # Расчёт стоимости, валидация
+│   └── cart_service.py          # Логика корзины
 └── core/                 # База, конфиг, DI
     ├── db_setup.py       # SQLAlchemy engine, SessionLocal, Base
     └── config.py         # Конфигурация
@@ -216,6 +220,7 @@ app/
 7. **Общие схемы** — `GoodsBase`, `GoodsCreate`, `GoodsUpdate`, `GoodsResponse` вынесены в `bookshelf/schemas.py` и импортируются в Nightstand и Dresser
 8. **Документация** — доступна по `/docs` (Swagger) и `/redoc` (ReDoc)
 9. **CartItem** — использует JSONB для конфигурации, FK на products и furniture_id для конкретной мебели
+10. **Pydantic схемы корзины** — созданы по принципу SRP: CartBase, CartCreate, CartUpdate, CartResponse, CartItemBase, CartItemCreate, CartItemUpdate, CartItemResponse
 
 ---
 
@@ -308,7 +313,8 @@ tests/
 │   ├── test_dresser_schema.py
 │   ├── test_nightstand_schema.py
 │   ├── test_part_schema.py
-│   └── test_cart_item.py
+│   ├── test_cart_item.py
+│   └── test_cart_schemas.py
 ├── conftest.py           # Глобальные фикстуры
 └── pytest.ini
 ```
@@ -320,7 +326,7 @@ python3 -m pytest tests/ -v --coverage
 ```
 
 **Статистика:**
-- **143 теста проходят** ✅
+- **176 тестов проходят** ✅
 
 ### Фронтенд
 
@@ -381,7 +387,7 @@ alembic downgrade -1
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 143 теста |
+| Тесты бэкенда | ✅ 176 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 
 **Общий прогресс:** ~60-70%

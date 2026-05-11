@@ -1,60 +1,158 @@
 """
 Pydantic схемы для корзины
 Отвечает за валидацию запросов и ответов API корзины
+
+Принцип SRP: каждая схема отвечает только за одну конкретную задачу
 """
-from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, Field
+from datetime import datetime
+from decimal import Decimal
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, field_validator
 
 
-class CartItemCreate(BaseModel):
-    """Схема создания товара в корзине"""
-    product_type: str = Field(..., description="Тип товара: bookshelf, nightstand, dresser")
-    product_id: str = Field(..., description="ID товара")
-    configuration: Dict[str, Any] = Field(..., description="Конфигурация товара")
-    quantity: int = Field(1, ge=1, le=99, description="Количество")
+# ============================================================================
+# CART SCHEMAS
+# ============================================================================
+
+class CartBase(BaseModel):
+    """Базовая схема корзины - общие поля"""
+    user_id: Optional[str] = Field(None, description="ID пользователя")
+    session_id: Optional[str] = Field(None, description="ID сессии для гостей")
 
 
-class CartItemResponse(BaseModel):
-    """Схема ответа товара в корзине"""
-    id: str
-    cart_id: str
-    product_type: str
-    product_id: str
-    configuration: Dict[str, Any]
-    quantity: int
-    unit_price: float
-    total_price: float
+class CartCreate(CartBase):
+    """Схема создания корзины - минимальные обязательные поля"""
+    pass  # user_id или session_id могут быть None
 
-    class Config:
-        from_attributes = True
+
+class CartUpdate(BaseModel):
+    """Схема обновления корзины - только изменяемые поля"""
+    session_id: Optional[str] = Field(None, description="Обновить session_id")
 
 
 class CartResponse(BaseModel):
-    """Схема ответа корзины"""
-    id: str
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    items: List[CartItemResponse] = []
-    total_items: int = 0
-    total_price: float = 0.0
-
+    """Схема ответа корзины - полная информация с вычисляемыми полями"""
+    id: str = Field(..., description="ID корзины")
+    user_id: Optional[str] = Field(None, description="ID пользователя")
+    session_id: Optional[str] = Field(None, description="ID сессии")
+    items: List["CartItemResponse"] = Field(default_factory=list, description="Элементы корзины")
+    
+    # Вычисляемые поля
+    items_count: int = Field(..., description="Общее количество товаров")
+    subtotal: Decimal = Field(..., description="Итоговая сумма (без скидок)")
+    created_at: datetime = Field(..., description="Дата создания")
+    updated_at: datetime = Field(..., description="Дата обновления")
+    
     class Config:
         from_attributes = True
 
 
-class CartUpdateQuantity(BaseModel):
-    """Схема обновления количества товара"""
-    quantity: int = Field(..., ge=1, le=99)
+# ============================================================================
+# CART ITEM SCHEMAS
+# ============================================================================
+
+class CartItemBase(BaseModel):
+    """Базовая схема позиции корзины - общие поля"""
+    furniture_type: str = Field(..., description="Тип мебели: bookshelf, nightstand, dresser")
+    furniture_id: str = Field(..., description="ID конкретной мебели")
+    configuration_id: Optional[str] = Field(None, description="ID конфигурации из каталога")
+    quantity: int = Field(..., ge=1, le=99, description="Количество")
+    unit_price: Decimal = Field(..., ge=0, description="Цена за единицу")
+    saved_configuration_snapshot: Optional[Dict[str, Any]] = Field(
+        None, 
+        description="Снепшот конфигурации на момент добавления"
+    )
+
+
+class CartItemCreate(BaseModel):
+    """Схема создания позиции корзины - только обязательные поля для создания"""
+    furniture_type: str = Field(..., description="Тип мебели: bookshelf, nightstand, dresser")
+    furniture_id: str = Field(..., description="ID конкретной мебели")
+    configuration_id: Optional[str] = Field(None, description="ID конфигурации из каталога")
+    quantity: int = Field(1, ge=1, le=99, description="Количество")
+    
+    @field_validator('furniture_type')
+    @classmethod
+    def validate_furniture_type(cls, v: str) -> str:
+        """Валидация типа мебели"""
+        valid_types = ['bookshelf', 'nightstand', 'dresser']
+        if v not in valid_types:
+            raise ValueError(f'Неверный тип мебели. Допустимые: {", ".join(valid_types)}')
+        return v
 
 
 class CartItemUpdate(BaseModel):
-    """Схема обновления товара в корзине"""
-    configuration: Optional[Dict[str, Any]] = None
-    quantity: Optional[int] = Field(None, ge=1, le=99)
+    """Схема обновления позиции корзины - только изменяемые поля"""
+    quantity: Optional[int] = Field(None, ge=1, le=99, description="Новое количество")
 
+
+class CartItemResponse(BaseModel):
+    """Схема ответа позиции корзины - полная информация с вычисляемыми полями"""
+    id: str = Field(..., description="ID позиции")
+    cart_id: str = Field(..., description="ID корзины")
+    
+    # Основные данные
+    furniture_type: str = Field(..., description="Тип мебели")
+    furniture_id: str = Field(..., description="ID мебели")
+    configuration_id: Optional[str] = Field(None, description="ID конфигурации")
+    quantity: int = Field(..., description="Количество")
+    unit_price: Decimal = Field(..., description="Цена за единицу")
+    saved_configuration_snapshot: Optional[Dict[str, Any]] = Field(None, description="Снепшот конфигурации")
+    
+    # Вычисляемые поля
+    item_total: Decimal = Field(..., description="Сумма позиции (quantity * unit_price)")
+    furniture_name: Optional[str] = Field(None, description="Название мебели")
+    created_at: datetime = Field(..., description="Дата добавления")
+    updated_at: datetime = Field(..., description="Дата обновления")
+    
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# CART SUMMARY SCHEMAS
+# ============================================================================
 
 class CartSummary(BaseModel):
-    """Схема резюме корзины"""
-    total_items: int = 0
-    total_price: float = 0.0
-    item_count: int = 0
+    """Схема резюме корзины - краткая информация для UI"""
+    items_count: int = Field(..., description="Количество товаров")
+    subtotal: Decimal = Field(..., description="Подытог")
+    
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# REQUEST/RESPONSE WRAPPERS
+# ============================================================================
+
+class AddToCartRequest(BaseModel):
+    """Запрос добавления товара в корзину"""
+    furniture_type: str = Field(..., description="Тип мебели")
+    furniture_id: str = Field(..., description="ID мебели")
+    configuration: Optional[Dict[str, Any]] = Field(None, description="Конфигурация")
+    quantity: int = Field(1, ge=1, le=99, description="Количество")
+
+
+class AddToCartResponse(BaseModel):
+    """Ответ добавления товара в корзину"""
+    success: bool = True
+    message: str = "Товар добавлен в корзину"
+    cart_item: CartItemResponse
+    cart_summary: CartSummary
+
+
+class RemoveFromCartResponse(BaseModel):
+    """Ответ удаления товара из корзины"""
+    success: bool = True
+    message: str = "Товар удалён из корзины"
+    removed_item_id: str
+    cart_summary: CartSummary
+
+
+class UpdateCartItemResponse(BaseModel):
+    """Ответ обновления товара в корзине"""
+    success: bool = True
+    message: str = "Данные корзины обновлены"
+    cart_item: CartItemResponse
+    cart_summary: CartSummary

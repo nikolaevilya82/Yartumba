@@ -47,7 +47,7 @@ python3 -m pytest tests/ -v --coverage
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 143 теста проходят ✅
+**Статистика:** 176 тестов проходят ✅
 
 ### Frontend
 
@@ -253,7 +253,7 @@ MIT License — подробности в файле `LICENSE`
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 143 теста |
+| Тесты бэкенда | ✅ 176 тестов |
 | Тесты фронтенда | ✅ 461 тест |
 
 **Общий прогресс:** ~60-70%
@@ -325,6 +325,32 @@ furniture = cart_item.get_furniture_object(db)
 # Пересчитать цену на основе текущих материалов
 new_price = cart_item.recalculate_price(db)
 ```
+
+### Pydantic схемы корзины
+
+**По принципу SRP:**
+
+| Схема | Назначение |
+|-------|-----------|
+| `CartBase` | Базовые поля (`user_id`, `session_id`) |
+| `CartCreate` | Создание корзины |
+| `CartUpdate` | Обновление корзины |
+| `CartResponse` | Полный ответ корзины |
+| `CartItemBase` | Базовые поля позиции |
+| `CartItemCreate` | Создание позиции (валидация furniture_type, quantity 1-99) |
+| `CartItemUpdate` | Обновление позиции |
+| `CartItemResponse` | Полный ответ позиции |
+| `CartSummary` | Краткое резюме |
+
+**Вычисляемые поля:**
+- `CartResponse.items_count` — общее количество товаров
+- `CartResponse.subtotal` — итоговая сумма
+- `CartItemResponse.item_total` — сумма позиции (quantity × unit_price)
+
+**Валидация:**
+- `furniture_type`: только `bookshelf`, `nightstand`, `dresser`
+- `quantity`: от 1 до 99
+- `unit_price`: `Decimal >= 0`
 
 ---
 
