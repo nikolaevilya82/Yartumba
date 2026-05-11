@@ -39,6 +39,13 @@
 |---------|----------|
 | `furniture_materials` | Универсальная связь материала с изделием. Содержит `furniture_type` (bookshelf/nightstand/dresser) и `furniture_id`. Поля: `sheet_material_id`, `edge_id`, `slide_guide_id`, `hinge_id`, `support_id`, `wall_mount_id`, `quantity` |
 
+### Корзина
+
+| Таблица | Описание |
+|---------|----------|
+| `carts` | Корзины пользователей (одна на пользователя или сессию) |
+| `cart_items` | Позиции корзины с JSONB конфигурацией товаров |
+
 ---
 
 ## Модели Python
@@ -73,6 +80,9 @@ from app.models.materials import (
     EdgeMaterial,
     Support, WallMount,
 )
+
+# Корзина
+from app.models.cart import Cart, CartItem
 ```
 
 ---
@@ -99,11 +109,12 @@ app/
 │   │   └── dresser.py
 │   ├── components/       # Компоненты
 │   │   └── drawer.py     # Универсальные ящики
-│   └── materials/        # Материалы и фурнитура
-│       ├── sheet_materials.py
-│       ├── hardware.py
-│       ├── edge.py
-│       └── supports.py
+│   ├── materials/        # Материалы и фурнитура
+│   │   ├── sheet_materials.py
+│   │   ├── hardware.py
+│   │   ├── edge.py
+│   │   └── supports.py
+│   └── cart.py           # Корзина (Cart, CartItem)
 ├── api/                  # API эндпоинты
 │   └── v1/
 │       ├── router.py     # Главный роутер v1
@@ -204,6 +215,7 @@ app/
 6. **Ящики и детали** имеют ForeignKey с `ondelete="CASCADE"`
 7. **Общие схемы** — `GoodsBase`, `GoodsCreate`, `GoodsUpdate`, `GoodsResponse` вынесены в `bookshelf/schemas.py` и импортируются в Nightstand и Dresser
 8. **Документация** — доступна по `/docs` (Swagger) и `/redoc` (ReDoc)
+9. **CartItem** — использует JSONB для конфигурации, FK на products и furniture_id для конкретной мебели
 
 ---
 
@@ -225,6 +237,8 @@ app/
 | `FurnitureMaterial` | `Hinge` | many:1 |
 | `FurnitureMaterial` | `Support` | many:1 |
 | `FurnitureMaterial` | `WallMount` | many:1 |
+| `Cart` | `CartItem` | 1:n (CASCADE) |
+| `Product` | `CartItem` | 1:n |
 
 ---
 
@@ -264,81 +278,12 @@ app/
 
 ---
 
-## Фронтенд (React + Vite)
-
-### Структура
-
 ## Тестирование
 
 ### Бэкенд
 
 **Структура:**
 ```
-frontend/
-├── src/
-│   ├── core/               # Ядро (конфиги, типы, утилиты, константы)
-│   │   ├── config/         # Конфигурация
-│   │   │   ├── app.config.ts      # Настройки приложения
-│   │   │   ├── api.config.ts      # URL API, эндпоинты
-│   │   │   └── routes.config.ts   # Маршруты
-│   │   ├── constants/      # Константы
-│   │   │   ├── product.constants.ts      # Типы товаров, категории
-│   │   │   ├── configurator.constants.ts # Опции конфигуратора
-│   │   │   └── validation.constants.ts   # Валидация
-│   │   ├── types/          # TypeScript типы
-│   │   │   ├── product.types.ts        # Product, Furniture, Bookshelf...
-│   │   │   ├── configurator.types.ts   # Опции, Configuration
-│   │   │   ├── cart.types.ts           # Cart, CartItem, Order
-│   │   │   └── api.types.ts            # ApiResponse, Pagination
-│   │   ├── utils/          # Утилиты
-│   │   │   ├── price.utils.ts      # Форматирование цен
-│   │   │   ├── validation.utils.ts # Валидация форм
-│   │   │   ├── storage.utils.ts    # localStorage
-│   │   │   └── helpers.utils.ts    # Общие функции
-│   │   ├── assets/         # Статика
-│   │   ├── main.jsx        # Точка входа
-│   │   └── index.css       # Глобальные стили
-│   ├── api/                # API клиент и сервисы
-│   │   ├── client.ts       # Базовый HTTP клиент (fetch)
-│   │   ├── index.ts        # Главный экспорт
-│   │   ├── endpoints/      # Эндпоинты API
-│   │   │   ├── index.ts              # Ре-экспорт
-│   │   │   ├── types/                # Типы эндпоинтов
-│   │   │   ├── helpers/              # Утилиты для эндпоинтов
-│   │   │   ├── common.endpoints.ts   # Категории, материалы
-│   │   │   ├── configurator.endpoints.ts
-│   │   │   ├── cart.endpoints.ts
-│   │   │   ├── orders.endpoints.ts
-│   │   │   └── products/             # Товары
-│   │   │       ├── bookshelf.endpoints.ts
-│   │   │       ├── nightstand.endpoints.ts
-│   │   │       └── dresser.endpoints.ts
-│   │   └── services/        # API сервисы
-│   │       ├── bookshelf.service.ts
-│   │       ├── nightstand.service.ts
-│   │       ├── dresser.service.ts
-│   │       ├── configurator.service.ts
-│   │       ├── cart.service.ts
-│   │       └── order.service.ts
-│   ├── hooks/              # Глобальные кастомные хуки
-│   ├── stores/             # Глобальное состояние
-│   ├── components/         # Переиспользуемые компоненты
-│   │   ├── ui/             # Базовые (Button, Input...)
-│   │   └── common/         # Общие приложения
-│   ├── modules/            # Функциональные модули
-│   │   ├── catalog/        # Каталог
-│   │   ├── bookshelf/      # Книжные полки
-│   │   ├── nightstand/     # Тумбы
-│   │   ├── dresser/        # Комоды
-│   │   └── cart/           # Корзина
-│   ├── layouts/            # Компоненты макетов
-│   ├── pages/              # Страницы
-│   │   ├── App.jsx         # Главный компонент
-│   │   └── App.css         # Стили App
-│   └── routes/             # Маршрутизация
-├── public/                 # Публичные файлы
-├── package.json            # Зависимости
-└── vite.config.js          # Конфиг Vite
 tests/
 ├── catalog/              # Тесты каталога
 │   └── test_catalog.py
@@ -362,376 +307,33 @@ tests/
 │   ├── test_bookshelf_schema.py
 │   ├── test_dresser_schema.py
 │   ├── test_nightstand_schema.py
-│   └── test_part_schema.py
+│   ├── test_part_schema.py
+│   └── test_cart_item.py
 ├── conftest.py           # Глобальные фикстуры
 └── pytest.ini
 ```
 
-### Импорты из core
-
-```typescript
-// Конфиги
-import { appConfig } from 'core/config/app.config';
-import { apiConfig } from 'core/config/api.config';
-import { routes, routeNames } from 'core/config/routes.config';
-
-// Константы
-import { 
-  FurnitureType, 
-  furnitureTypeNames,
-  PartType,
-  CategorySlug 
-} from 'core/constants/product.constants';
-import { 
-  MaterialType, 
-  materialTypeNames,
-  configuratorDefaults 
-} from 'core/constants/configurator.constants';
-
-// Типы
-import type { 
-  Product, 
-  Bookshelf, 
-  Nightstand, 
-  Dresser,
-  FurniturePart 
-} from 'core/types/product.types';
-import type { 
-  MaterialOption, 
-  FurnitureConfiguration,
-  ConfiguratorOptions 
-} from 'core/types/configurator.types';
-import type { 
-  Cart, 
-  CartItem, 
-  Order 
-} from 'core/types/cart.types';
-import type { 
-  ApiResponse, 
-  PaginatedResponse,
-  PaginationParams 
-} from 'core/types/api.types';
-
-// Утилиты
-import { formatPrice, calculateDiscount } from 'core/utils/price.utils';
-import { isValidEmail, combineValidators } from 'core/utils/validation.utils';
-import { setItem, getItem, storageKeys } from 'core/utils/storage.utils';
-import { generateId, formatDate, debounce, clamp } from 'core/utils/helpers.utils';
-```
-
-### Импорты из api
-
-```typescript
-// API клиент
-import { apiClient, createApiClient } from 'api/client';
-
-// Эндпоинты
-import { 
-  bookshelfEndpoints, 
-  nightstandEndpoints, 
-  dresserEndpoints,
-  configuratorEndpoints, 
-  cartEndpoints, 
-  orderEndpoints,
-  goodsEndpoints,
-  queryParams 
-} from 'api/endpoints';
-
-// Сервисы товаров
-import * as bookshelобавь всеf.Service from 'api/services/bookshelf.service';
-import * as nightstandService from 'api/services/nightstand.service';
-import * as dresserService from 'api/services/dresser.service';
-
-// Сервисы
-import * as configuratorService from 'api/services/configurator.service';
-import * as cartService from 'api/services/cart.service';
-import * as orderService from 'api/services/order.service';
-```
-
-### Запуск
-
 **Запуск:**
 ```bash
-cd frontend
-npm install
-npm run dev      # Dev-сервер (http://localhost:5173)
-npm run build    # Сборка в prod
-npm run preview  # Превью prod-сборки
 python3 -m pytest tests/ -v
 python3 -m pytest tests/ -v --coverage
 ```
 
 **Статистика:**
-- 130 тестов проходят ✅
-- 40 тестов пропущены (нереализованный функционал) ⏸️
+- **143 теста проходят** ✅
 
 ### Фронтенд
-
-**Инфраструктура:**
-```
-frontend/
-├── tests/
-│   ├── setup.ts                  # Глобальные моки
-│   ├── mocks/
-│   │   └── handlers.ts           # MSW handlers
-│   └── utils/
-│       ├── render.tsx            # Кастомный render
-│       └── testIds.ts            # Тестовые ID
-├── tests/unit/core/utils/        # Unit тесты утилит
-│   ├── price.utils.test.ts       # 35 тестов
-│   ├── validation.utils.test.ts  # 47 тестов
-│   ├── storage.utils.test.ts     # 27 тестов
-│   └── helpers.utils.test.ts     # 55 тестов
-├── vitest.config.ts
-├── tsconfig.test.json
-└── package.json
-```
-
-**Зависимости:**
-- `vitest` — фреймворк тестирования
-- `@testing-library/react` — тестирование компонентов
-- `@testing-library/jest-dom` — ассерты
-- `msw` — моки API
-
-**Скрипты:**
-```bash
-npm run test              # Запуск тестов
-npm run test:watch        # Режим наблюдения
-npm run test:ui           # UI режим
-npm run test:coverage     # Отчёт покрытия
-```
 
 **Статистика фронтенд тестов:**
 - 113 unit тестов утилит проходят ✅
 - 148 API тестов (client, endpoints, services) проходят ✅
 - 200 тестов сторов (UI, Cart, Configurator) проходят ✅
 - 36 тестов кастомных хуков проходят ✅
-- **Всего:** 497 тестов ✅
-- Инфраструктура готова для компонентных тестов
+- **Всего: 497 тестов** ✅
 
 ---
 
-## Связи между таблицами
-
-| Родитель | Потомок | Тип связи |
-|----------|---------|-----------|
-| `Product` | `Bookshelf/Nightstand/Dresser` | 1:1 (FK) |
-| `Category` | `Product` | 1:n |
-| `Bookshelf` | `BookshelfPart` | 1:n (CASCADE) |
-| `Nightstand` | `NightstandPart` | 1:n (CASCADE) |
-| `Dresser` | `DresserPart` | 1:n (CASCADE) |
-| `SheetMaterial` | `EdgeMaterial` | 1:1 (unique) |
-| `SheetMaterial` | `BookshelfPart/NightstandPart/DresserPart` | 1:n |
-| `Drawer` | `SlideGuide` | many:1 |
-| `FurnitureMaterial` | `SheetMaterial` | many:1 |
-| `FurnitureMaterial` | `EdgeMaterial` | many:1 |
-| `FurnitureMaterial` | `SlideGuide` | many:1 |
-| `FurnitureMaterial` | `Hinge` | many:1 |
-| `FurnitureMaterial` | `Support` | many:1 |
-| `FurnitureMaterial` | `WallMount` | many:1 |
-
----
-
-## Типы материалов (material_type в sheet_materials)
-
-- `chipboard` — ДСП
-- `ldsp` — ЛДСП
-- `mdf` — МДФ
-- `hdf` — ХДФ
-- `plywood` — Фанера
-- `solid_wood` — Массив
-
----
-
-## Типы изделий (furniture_type)
-
-**В FurnitureMaterial:**
-- `bookshelf` — Книжная полка
-- `nightstand` — Прикроватная тумба
-- `dresser` — Комод
-
-**В Drawer:**
-- `nightstand` — Прикроватная тумба
-- `dresser` — Комод
-
----
-
-## Части изделий (part_type в furniture_materials)
-
-- `body` — Корпус
-- `shelf` — Полка
-- `facade` — Фасад
-- `top` — Столешница
-- `legs` — Ножки
-- `back` — Задняя стенка
-- `drawer` — Ящик
-
----
-
-## Фронтенд (React + Vite)
-
-### Структура
-
-```
-frontend/
-├── src/
-│   ├── core/               # Ядро (конфиги, типы, утилиты, константы)
-│   │   ├── config/         # Конфигурация
-│   │   │   ├── app.config.ts      # Настройки приложения
-│   │   │   ├── api.config.ts      # URL API, эндпоинты
-│   │   │   └── routes.config.ts   # Маршруты
-│   │   ├── constants/      # Константы
-│   │   │   ├── product.constants.ts      # Типы товаров, категории
-│   │   │   ├── configurator.constants.ts # Опции конфигуратора
-│   │   │   └── validation.constants.ts   # Валидация
-│   │   ├── types/          # TypeScript типы
-│   │   │   ├── product.types.ts        # Product, Furniture, Bookshelf...
-│   │   │   ├── configurator.types.ts   # Опции, Configuration
-│   │   │   ├── cart.types.ts           # Cart, CartItem, Order
-│   │   │   └── api.types.ts            # ApiResponse, Pagination
-│   │   ├── utils/          # Утилиты
-│   │   │   ├── price.utils.ts      # Форматирование цен
-│   │   │   ├── validation.utils.ts # Валидация форм
-│   │   │   ├── storage.utils.ts    # localStorage
-│   │   │   └── helpers.utils.ts    # Общие функции
-│   │   ├── assets/         # Статика
-│   │   ├── main.jsx        # Точка входа
-│   │   └── index.css       # Глобальные стили
-│   ├── api/                # API клиент и сервисы
-│   │   ├── client.ts       # Базовый HTTP клиент (fetch)
-│   │   ├── index.ts        # Главный экспорт
-│   │   ├── endpoints/      # Эндпоинты API
-│   │   │   ├── index.ts              # Ре-экспорт
-│   │   │   ├── types/                # Типы эндпоинтов
-│   │   │   ├── helpers/              # Утилиты для эндпоинтов
-│   │   │   ├── common.endpoints.ts   # Категории, материалы
-│   │   │   ├── configurator.endpoints.ts
-│   │   │   ├── cart.endpoints.ts
-│   │   │   ├── orders.endpoints.ts
-│   │   │   └── products/             # Товары
-│   │   │       ├── bookshelf.endpoints.ts
-│   │   │       ├── nightstand.endpoints.ts
-│   │   │       └── dresser.endpoints.ts
-│   │   └── services/        # API сервисы
-│   │       ├── bookshelf.service.ts
-│   │       ├── nightstand.service.ts
-│   │       ├── dresser.service.ts
-│   │       ├── configurator.service.ts
-│   │       ├── cart.service.ts
-│   │       └── order.service.ts
-│   ├── hooks/              # Глобальные кастомные хуки
-│   ├── stores/             # Глобальное состояние
-│   ├── components/         # Переиспользуемые компоненты
-│   │   ├── ui/             # Базовые (Button, Input...)
-│   │   └── common/         # Общие приложения
-│   ├── modules/            # Функциональные модули
-│   │   ├── catalog/        # Каталог
-│   │   ├── bookshelf/      # Книжные полки
-│   │   ├── nightstand/     # Тумбы
-│   │   ├── dresser/        # Комоды
-│   │   └── cart/           # Корзина
-│   ├── layouts/            # Компоненты макетов
-│   ├── pages/              # Страницы
-│   │   ├── App.jsx         # Главный компонент
-│   │   └── App.css         # Стили App
-│   └── routes/             # Маршрутизация
-├── public/                 # Публичные файлы
-├── package.json            # Зависимости
-└── vite.config.js          # Конфиг Vite
-```
-
-### Импорты из core
-
-```typescript
-// Конфиги
-import { appConfig } from 'core/config/app.config';
-import { apiConfig } from 'core/config/api.config';
-import { routes, routeNames } from 'core/config/routes.config';
-
-// Константы
-import { 
-  FurnitureType, 
-  furnitureTypeNames,
-  PartType,
-  CategorySlug 
-} from 'core/constants/product.constants';
-import { 
-  MaterialType, 
-  materialTypeNames,
-  configuratorDefaults 
-} from 'core/constants/configurator.constants';
-
-// Типы
-import type { 
-  Product, 
-  Bookshelf, 
-  Nightstand, 
-  Dresser,
-  FurniturePart 
-} from 'core/types/product.types';
-import type { 
-  MaterialOption, 
-  FurnitureConfiguration,
-  ConfiguratorOptions 
-} from 'core/types/configurator.types';
-import type { 
-  Cart, 
-  CartItem, 
-  Order 
-} from 'core/types/cart.types';
-import type { 
-  ApiResponse, 
-  PaginatedResponse,
-  PaginationParams 
-} from 'core/types/api.types';
-
-// Утилиты
-import { formatPrice, calculateDiscount } from 'core/utils/price.utils';
-import { isValidEmail, combineValidators } from 'core/utils/validation.utils';
-import { setItem, getItem, storageKeys } from 'core/utils/storage.utils';
-import { generateId, formatDate, debounce, clamp } from 'core/utils/helpers.utils';
-```
-
-### Импорты из api
-
-```typescript
-// API клиент
-import { apiClient, createApiClient } from 'api/client';
-
-// Эндпоинты
-import { 
-  bookshelfEndpoints, 
-  nightstandEndpoints, 
-  dresserEndpoints,
-  configuratorEndpoints, 
-  cartEndpoints, 
-  orderEndpoints,
-  goodsEndpoints,
-  queryParams 
-} from 'api/endpoints';
-
-// Сервисы товаров
-import * as bookshelfService from 'api/services/bookshelf.service';
-import * as nightstandService from 'api/services/nightstand.service';
-import * as dresserService from 'api/services/dresser.service';
-
-// Сервисы
-import * as configuratorService from 'api/services/configurator.service';
-import * as cartService from 'api/services/cart.service';
-import * as orderService from 'api/services/order.service';
-```
-
-### Запуск
-
-```bash
-cd frontend
-npm install
-npm run dev      # Dev-сервер (http://localhost:5173)
-npm run build    # Сборка в prod
-npm run preview  # Превью prod-сборки
-```
-
-### PostgreSQL
+## PostgreSQL
 
 **Настройка:**
 1. Создать `.env` из `.env.example`:
@@ -754,41 +356,36 @@ pip install psycopg2-binary
 alembic upgrade head
 ```
 
-**Документация:** `POSTGRES_SETUP.md`
+**Миграции:**
+```bash
+# Создание новой миграции
+alembic revision --autogenerate -m "description"
 
-### Текущие товары на главной
+# Применение миграций
+alembic upgrade head
 
-| Товар | Тип | Цена |
-|-------|-----|------|
-| Книжная полка | bookshelf | 8 500 ₽ |
-| Прикроватная тумба | nightstand | 5 200 ₽ |
-| Комод | dresser | 12 500 ₽ |
-
-### API для фронтенда
-
-Бэкенд API: `http://localhost:8000`
-
-- Bookshelf: `/v1/goods/bookshelf/`
-- Nightstand: `/v1/goods/nightstand/`
-- Dresser: `/v1/goods/dresser/`
-- Configurator: `/v1/configurator/*`
-
-Документация: `/docs`
+# Откат миграции
+alembic downgrade -1
+```
 
 ---
 
 ## Статус проекта
 
-| Компонент | Статус | Процент |
-|-----------|--------|---------|
-| **Модели БД** | ✅ Готово | 100% |
-| **API Routes (CRUD)** | ✅ Готово | 100% |
-| **Конфигуратор** | 🟡 В разработке | 60% |
-| **Корзина** | ⏸️ Не реализовано | 0% |
-| **Заказы** | ⏸️ Не реализовано | 0% |
-| **Авторизация** | ⏸️ Не реализовано | 0% |
-| **Фронтенд (структура)** | 🟡 В разработке | 70% |
-| **Тесты бэкенда** | ✅ Готово | 130 тестов |
-| **Тесты фронтенда** | ✅ Unit тесты | 113 тестов |
+| Компонент | Статус |
+|-----------|--------|
+| Модели БД | ✅ Готово |
+| API Routes (CRUD) | ✅ Готово |
+| Конфигуратор | 🟡 В разработке |
+| Корзина | 🟡 Модель готова |
+| Заказы | ⏸️ Не реализовано |
+| Авторизация | ⏸️ Не реализовано |
+| Фронтенд (структура) | 🟡 В разработке |
+| Тесты бэкенда | ✅ 143 теста |
+| Тесты фронтенда | ✅ 497 тестов |
 
-**Общий прогресс:** ~55-65%
+**Общий прогресс:** ~60-70%
+
+---
+
+*Yartumba — создавай мебель своей мечты* 🪵

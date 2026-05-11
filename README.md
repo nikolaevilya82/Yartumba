@@ -47,7 +47,7 @@ python3 -m pytest tests/ -v --coverage
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 130 тестов проходят ✅
+**Статистика:** 143 теста проходят ✅
 
 ### Frontend
 
@@ -86,12 +86,37 @@ cd Yartumba
 # Установка зависимостей
 pip install -r requirements.txt
 
+# Создание .env файла
+cp .env.example .env
+
+# Настройка DATABASE_URL в .env
+# DATABASE_URL=postgresql://username:password@localhost:5432/yartumba
+
 # Запуск миграций
 alembic upgrade head
 
 # Запуск сервера
 uvicorn main:app --reload
 ```
+
+## 🗄️ Миграции Alembic
+
+```bash
+# Создание новой миграции
+alembic revision --autogenerate -m "description"
+
+# Применение миграций
+alembic upgrade head
+
+# Откат миграции
+alembic downgrade -1
+
+# Текущая версия
+alembic current
+```
+
+**Текущие миграции:**
+- `001_update_cart_item_with_jsonb_and_product_fk` — обновление модели корзины (JSONB, FK на products, furniture_id)
 
 ## 📁 Структура проекта
 
@@ -224,14 +249,82 @@ MIT License — подробности в файле `LICENSE`
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | 🟡 В разработке |
-| Корзина | ⏸️ Не реализовано |
+| Корзина | 🟡 Модель готова |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 130 тестов |
+| Тесты бэкенда | ✅ 143 теста |
 | Тесты фронтенда | ✅ 461 тест |
 
-**Общий прогресс:** ~55-65%
+**Общий прогресс:** ~60-70%
+
+---
+
+## 🛒 Модель корзины
+
+### Структура CartItem
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | Уникальный ID позиции |
+| `cart_id` | UUID | Ссылка на корзину |
+| `product_id` | UUID | FK на products (каталог) |
+| `product_type` | String | bookshelf, nightstand, dresser |
+| `furniture_id` | UUID | ID конкретной мебели |
+| `configuration` | JSONB | Конфигурация товара |
+| `quantity` | Integer | Количество |
+| `unit_price` | Numeric(10,2) | Цена за единицу |
+| `total_price` | Numeric(10,2) | Итоговая цена |
+| `materials_snapshot` | JSONB | Снепшот материалов |
+| `created_at` | DateTime | Дата создания |
+| `updated_at` | DateTime | Дата обновления |
+
+### Структура configuration по типам
+
+**Bookshelf:**
+```json
+{
+  "dimensions": {"width": 800, "height": 1800, "depth": 300},
+  "parts": [
+    {"type": "side_panel", "material_id": "uuid", "quantity": 2},
+    {"type": "shelf", "material_id": "uuid", "quantity": 4}
+  ],
+  "back_panel": {"material_id": "uuid", "thickness": 8}
+}
+```
+
+**Nightstand:**
+```json
+{
+  "dimensions": {"width": 500, "height": 450, "depth": 400},
+  "parts": [{"type": "side_panel", "material_id": "uuid", "quantity": 2}],
+  "drawers": [
+    {"drawer_id": "uuid", "slide_guide_id": "uuid", "facade_material_id": "uuid"}
+  ],
+  "facade_material_id": "uuid"
+}
+```
+
+**Dresser:**
+```json
+{
+  "dimensions": {"width": 1200, "height": 800, "depth": 500},
+  "parts": [...],
+  "drawers": [...],
+  "top_material_id": "uuid",
+  "hinge_id": "uuid"
+}
+```
+
+### Методы CartItem
+
+```python
+# Получить объект мебели
+furniture = cart_item.get_furniture_object(db)
+
+# Пересчитать цену на основе текущих материалов
+new_price = cart_item.recalculate_price(db)
+```
 
 ---
 
