@@ -1,198 +1,484 @@
 """
 Сервис корзины
-Отвечает за бизнес-логику работы с корзиной
+Отвечает за бизнес-логику работы с корзиной: добавление, удаление, обновление товаров
 """
-import json
-from typing import Optional, Dict, Any, List
+from decimal import Decimal
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+
 from app.models.cart import Cart, CartItem
 from app.models.goods import Bookshelf, Nightstand, Dresser
-from app.services.configuratorservice import configurator_service
+from app.api.v1.goods.cart.schemas import CartItemCreate
 
 
 class CartService:
     """Сервис для работы с корзиной"""
 
-    def __init__(self, db: Session):
-        self.db = db
+    # =========================================================================
+    # Получение корзины
+    # =========================================================================
 
-    def get_or_create_cart(self, user_id: Optional[str] = None, session_id: Optional[str] = None) -> Cart:
+    def get_or_create_cart(
+        self,
+        db: Session,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None
+    ) -> Cart:
         """
-        Получить или создать корзину
-        SRP: Только создание/получение корзины
+        Получить существующую корзину или создать новую
+        
+        Приоритет: user_id > session_id > создать новую
+        
+        Args:
+            db: Database session
+            user_id: ID пользователя (опционально)
+            session_id: ID сессии для гостей (опционально)
+            
+        Returns:
+            Cart: Корзина пользователя или гостя
         """
+        # Приоритет 1: Ищем корзину пользователя
         if user_id:
-            cart = self.db.query(Cart).filter(Cart.user_id == user_id).first()
+            cart = db.query(Cart).filter(Cart.user_id == user_id).first()
             if cart:
                 return cart
         
+        # Приоритет 2: Ищем корзину по session_id
         if session_id:
-            cart = self.db.query(Cart).filter(Cart.session_id == session_id).first()
+            cart = db.query(Cart).filter(Cart.session_id == session_id).first()
             if cart:
+                # Если есть user_id, привязываем корзину к пользователю
+                if user_id:
+                    cart.user_id = user_id
+                    cart.session_id = None  # Убираем session_id после логина
+                    db.commit()
+                    db.refresh(cart)
                 return cart
         
-        # Создаем новую корзину
+        # Приоритет 3: Создаём новую корзину
+        return self._create_empty_cart(db, user_id=user_id, session_id=session_id)
+
+    def get_cart_by_user_id(self, db: Session, user_id: str) -> Optional[Cart]:
+        """
+        Получить корзину пользователя по user_id
+        
+        Args:
+            db: Database session
+            user_id: ID пользователя
+            
+        Returns:
+            Cart | None: Корзина или None
+        """
+        return db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    def get_cart_by_session_id(self, db: Session, session_id: str) -> Optional[Cart]:
+        """
+        Получить корзину по session_id
+        
+        Args:
+            db: Database session
+            session_id: ID сессии
+            
+        Returns:
+            Cart | None: Корзина или None
+        """
+        return db.query(Cart).filter(Cart.session_id == session_id).first()
+
+    def _create_empty_cart(
+        self,
+        db: Session,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None
+    ) -> Cart:
+        """
+        Создать пустую корзину
+        
+        Args:
+            db: Database session
+            user_id: ID пользователя (опционально)
+            session_id: ID сессии (опционально)
+            
+        Returns:
+            Cart: Новая пустая корзина
+        """
         cart = Cart(user_id=user_id, session_id=session_id)
-        self.db.add(cart)
-        self.db.commit()
-        self.db.refresh(cart)
+        db.add(cart)
+        db.commit()
+        db.refresh(cart)
         return cart
+
+    # =========================================================================
+    # Работа с товарами в корзине
+    # =========================================================================
 
     def add_item(
         self,
-        cart: Cart,
-        product_type: str,
-        product_id: str,
-        configuration: Dict[str, Any],
-        quantity: int = 1
-    ) -> CartItem:
+        db: Session,
+        cart_id: str,
+        item_data: CartItemCreate,
+        configuration: Optional[Dict[str, Any]] = None
+    ) -> Cart:
         """
         Добавить товар в корзину
-        SRP: Только добавление товара
+        
+        1. Проверить существование товара (furniture_type + furniture_id)
+        2. Получить актуальную цену товара
+        3. Если товар уже в корзине → увеличить quantity
+        4. Иначе → создать новый CartItem
+        5. Вернуть обновленную корзину
+        
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            item_data: Данные для создания позиции
+            configuration: Конфигурация товара (JSON)
+            
+        Returns:
+            Cart: Обновлённая корзина
+            
+        Raises:
+            ValueError: Если товар не найден
         """
-        # Проверяем существует ли товар
-        product = self._get_product(product_type, product_id)
-        if not product:
-            raise ValueError(f"Товар {product_type}/{product_id} не найден")
+        # 1. Проверить существование корзины
+        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        if not cart:
+            raise ValueError(f"Корзина {cart_id} не найдена")
         
-        # Рассчитываем цену в зависимости от типа товара
-        if product_type == "nightstand":
-            price_result = configurator_service.calculate_nightstand_cost(configuration)
-            unit_price = price_result["total_price"]
-        elif product_type == "bookshelf":
-            # Упрощённый расчёт для полки
-            unit_price = self._calculate_bookshelf_price(configuration)
-        elif product_type == "dresser":
-            # Упрощённый расчёт для комода
-            unit_price = self._calculate_dresser_price(configuration)
-        else:
-            raise ValueError(f"Неподдерживаемый тип товара: {product_type}")
+        # 2. Проверить существование товара
+        self._validate_furniture_exists(
+            db,
+            item_data.furniture_type,
+            item_data.furniture_id
+        )
         
-        # Проверяем есть ли такой товар в корзине
-        existing_item = self.db.query(CartItem).filter(
-            CartItem.cart_id == cart.id,
-            CartItem.product_type == product_type,
-            CartItem.product_id == product_id,
-            CartItem.configuration == json.dumps(configuration)
+        # 3. Получить актуальную цену
+        unit_price = self._get_furniture_price(
+            db,
+            item_data.furniture_type,
+            item_data.furniture_id,
+            item_data.configuration_id
+        )
+        
+        # 4. Ищем существующий товар в корзине
+        existing_item = db.query(CartItem).filter(
+            CartItem.cart_id == cart_id,
+            CartItem.furniture_type == item_data.furniture_type,
+            CartItem.furniture_id == item_data.furniture_id,
+            CartItem.configuration_id == item_data.configuration_id
         ).first()
         
         if existing_item:
-            # Обновляем количество
-            existing_item.quantity += quantity
-            existing_item.total_price = existing_item.unit_price * existing_item.quantity
-            self.db.commit()
-            self.db.refresh(existing_item)
-            return existing_item
+            # 5. Увеличиваем количество
+            existing_item.quantity += item_data.quantity
+            existing_item.unit_price = unit_price
+            existing_item.total_price = unit_price * existing_item.quantity
+            existing_item.saved_configuration_snapshot = configuration
+        else:
+            # 6. Создаём новый CartItem
+            cart_item = CartItem(
+                cart_id=cart_id,
+                furniture_type=item_data.furniture_type,
+                furniture_id=item_data.furniture_id,
+                configuration_id=item_data.configuration_id,
+                quantity=item_data.quantity,
+                unit_price=unit_price,
+                total_price=unit_price * item_data.quantity,
+                saved_configuration_snapshot=configuration
+            )
+            db.add(cart_item)
         
-        # Создаем новый товар
-        cart_item = CartItem(
-            cart_id=cart.id,
-            product_type=product_type,
-            product_id=product_id,
-            configuration=json.dumps(configuration),
-            quantity=quantity,
-            unit_price=unit_price,
-            total_price=unit_price * quantity
-        )
+        # 7. Сохраняем и обновляем корзину
+        db.commit()
+        db.refresh(cart)
         
-        self.db.add(cart_item)
-        self.db.commit()
-        self.db.refresh(cart_item)
-        return cart_item
+        return cart
 
-    def get_cart_items(self, cart: Cart) -> List[CartItem]:
+    def update_item_quantity(
+        self,
+        db: Session,
+        cart_id: str,
+        item_id: str,
+        quantity: int
+    ) -> Cart:
         """
-        Получить все товары в корзине
-        SRP: Только чтение товаров
+        Обновить количество товара в корзине
+        
+        1. Проверить существование CartItem
+        2. Если quantity <= 0 → удалить товар
+        3. Иначе → обновить quantity
+        4. Вернуть обновленную корзину
+        
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            item_id: ID позиции
+            quantity: Новое количество
+            
+        Returns:
+            Cart: Обновлённая корзина
+            
+        Raises:
+            ValueError: Если позиция не найдена
         """
-        return self.db.query(CartItem).filter(CartItem.cart_id == cart.id).all()
+        # 1. Найти позицию
+        cart_item = db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.cart_id == cart_id
+        ).first()
+        
+        if not cart_item:
+            raise ValueError(f"Позиция {item_id} не найдена в корзине {cart_id}")
+        
+        # 2. Если quantity <= 0 → удалить
+        if quantity <= 0:
+            db.delete(cart_item)
+        else:
+            # 3. Обновить количество
+            cart_item.quantity = quantity
+            cart_item.total_price = cart_item.unit_price * quantity
+        
+        # 4. Сохранить и вернуть корзину
+        db.commit()
+        
+        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        db.refresh(cart)
+        
+        return cart
 
-    def update_item_quantity(self, cart_item: CartItem, quantity: int) -> CartItem:
-        """
-        Обновить количество товара
-        SRP: Только обновление количества
-        """
-        cart_item.quantity = quantity
-        cart_item.total_price = cart_item.unit_price * quantity
-        self.db.commit()
-        self.db.refresh(cart_item)
-        return cart_item
-
-    def remove_item(self, cart_item: CartItem) -> None:
+    def remove_item(self, db: Session, cart_id: str, item_id: str) -> Cart:
         """
         Удалить товар из корзины
-        SRP: Только удаление
-        """
-        self.db.delete(cart_item)
-        self.db.commit()
-
-    def clear_cart(self, cart: Cart) -> None:
-        """
-        Очистить корзину
-        SRP: Только очистка
-        """
-        items = self.db.query(CartItem).filter(CartItem.cart_id == cart.id).all()
-        for item in items:
-            self.db.delete(item)
-        self.db.commit()
-
-    def get_cart_summary(self, cart: Cart) -> Dict[str, Any]:
-        """
-        Получить резюме корзины
-        SRP: Только подсчёт итогов
-        """
-        items = self.get_cart_items(cart)
-        total_items = sum(item.quantity for item in items)
-        total_price = sum(item.total_price for item in items)
         
-        return {
-            "total_items": total_items,
-            "total_price": total_price,
-            "item_count": len(items)
-        }
-
-    def _get_product(self, product_type: str, product_id: str):
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            item_id: ID позиции
+            
+        Returns:
+            Cart: Обновлённая корзина
+            
+        Raises:
+            ValueError: Если позиция не найдена
         """
-        Получить товар по типу и ID
-        SRP: Только получение товара
+        # Найти и удалить позицию
+        cart_item = db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.cart_id == cart_id
+        ).first()
+        
+        if not cart_item:
+            raise ValueError(f"Позиция {item_id} не найдена в корзине {cart_id}")
+        
+        db.delete(cart_item)
+        db.commit()
+        
+        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        db.refresh(cart)
+        
+        return cart
+
+    def clear_cart(self, db: Session, cart_id: str) -> Cart:
         """
-        if product_type == "bookshelf":
-            return self.db.query(Bookshelf).filter(Bookshelf.id == product_id).first()
-        elif product_type == "nightstand":
-            return self.db.query(Nightstand).filter(Nightstand.id == product_id).first()
-        elif product_type == "dresser":
-            return self.db.query(Dresser).filter(Dresser.id == product_id).first()
-        return None
+        Очистить корзину (удалить все позиции)
+        
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            
+        Returns:
+            Cart: Пустая корзина
+        """
+        # Удаляем все позиции
+        db.query(CartItem).filter(CartItem.cart_id == cart_id).delete()
+        db.commit()
+        
+        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        db.refresh(cart)
+        
+        return cart
 
-    def _calculate_bookshelf_price(self, config: Dict[str, Any]) -> float:
-        """Упрощённый расчёт цены полки"""
-        base_price = 5000
-        width = config.get("width", 800)
-        height = config.get("height", 2000)
-        depth = config.get("depth", 350)
-        shelf_count = config.get("shelves", 5)
-        
-        # Коэффициенты
-        width_factor = width / 800
-        height_factor = height / 2000
-        depth_factor = depth / 350
-        shelves_factor = 1 + (shelf_count - 5) * 0.1
-        
-        return int(base_price * width_factor * height_factor * depth_factor * shelves_factor)
+    # =========================================================================
+    # Расчёты
+    # =========================================================================
 
-    def _calculate_dresser_price(self, config: Dict[str, Any]) -> float:
-        """Упрощённый расчёт цены комода"""
-        base_price = 10000
-        width = config.get("width", 1000)
-        height = config.get("height", 800)
-        depth = config.get("depth", 500)
-        drawer_count = config.get("drawers", 4)
+    def _calculate_subtotal(self, db: Session, cart_id: str) -> Decimal:
+        """
+        Рассчитать подытог корзины (сумма всех item_total)
         
-        # Коэффициенты
-        width_factor = width / 1000
-        height_factor = height / 800
-        depth_factor = depth / 500
-        drawers_factor = 1 + (drawer_count - 4) * 0.15
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            
+        Returns:
+            Decimal: Подытог корзины
+        """
+        result = db.query(func.sum(CartItem.total_price)).filter(
+            CartItem.cart_id == cart_id
+        ).first()
         
-        return int(base_price * width_factor * height_factor * depth_factor * drawers_factor)
+        return result[0] or Decimal("0.00")
+
+    def _calculate_items_count(self, db: Session, cart_id: str) -> int:
+        """
+        Рассчитать общее количество товаров в корзине
+        
+        Args:
+            db: Database session
+            cart_id: ID корзины
+            
+        Returns:
+            int: Общее количество товаров
+        """
+        result = db.query(func.sum(CartItem.quantity)).filter(
+            CartItem.cart_id == cart_id
+        ).first()
+        
+        return result[0] or 0
+
+    # =========================================================================
+    # Объединение корзин (при логине)
+    # =========================================================================
+
+    def merge_carts(
+        self,
+        db: Session,
+        guest_session_id: str,
+        user_id: str
+    ) -> Cart:
+        """
+        Объединить гостевую корзину с корзиной пользователя
+        
+        1. Получить гостевую корзину по session_id
+        2. Получить/создать корзину пользователя
+        3. Объединить товары (суммировать quantity для одинаковых)
+        4. Удалить гостевую корзину
+        5. Вернуть корзину пользователя
+        
+        Args:
+            db: Database session
+            guest_session_id: Session ID гостя
+            user_id: ID пользователя
+            
+        Returns:
+            Cart: Объединённая корзина пользователя
+        """
+        # 1. Получить гостевую корзину
+        guest_cart = db.query(Cart).filter(
+            Cart.session_id == guest_session_id
+        ).first()
+        
+        if not guest_cart or not guest_cart.items:
+            # Если гостевой корзины нет или она пуста, просто получаем корзину пользователя
+            return self.get_or_create_cart(db, user_id=user_id)
+        
+        # 2. Получить корзину пользователя
+        user_cart = self.get_or_create_cart(db, user_id=user_id)
+        
+        # 3. Объединить товары
+        for guest_item in guest_cart.items:
+            # Ищем аналогичный товар в корзине пользователя
+            existing_item = db.query(CartItem).filter(
+                CartItem.cart_id == user_cart.id,
+                CartItem.furniture_type == guest_item.furniture_type,
+                CartItem.furniture_id == guest_item.furniture_id,
+                CartItem.configuration_id == guest_item.configuration_id
+            ).first()
+            
+            if existing_item:
+                # Суммируем количество
+                existing_item.quantity += guest_item.quantity
+                existing_item.total_price = existing_item.unit_price * existing_item.quantity
+            else:
+                # Переносим товар
+                new_item = CartItem(
+                    cart_id=user_cart.id,
+                    furniture_type=guest_item.furniture_type,
+                    furniture_id=guest_item.furniture_id,
+                    configuration_id=guest_item.configuration_id,
+                    quantity=guest_item.quantity,
+                    unit_price=guest_item.unit_price,
+                    total_price=guest_item.total_price,
+                    saved_configuration_snapshot=guest_item.saved_configuration_snapshot
+                )
+                db.add(new_item)
+        
+        # 4. Удалить гостевую корзину
+        db.delete(guest_cart)
+        db.commit()
+        
+        # 5. Вернуть корзину пользователя
+        db.refresh(user_cart)
+        return user_cart
+
+    # =========================================================================
+    # Вспомогательные методы
+    # =========================================================================
+
+    def _get_furniture_price(
+        self,
+        db: Session,
+        furniture_type: str,
+        furniture_id: str,
+        configuration_id: Optional[str] = None
+    ) -> Decimal:
+        """
+        Получить актуальную цену товара
+        
+        Args:
+            db: Database session
+            furniture_type: Тип мебели
+            furniture_id: ID мебели
+            configuration_id: ID конфигурации (опционально)
+            
+        Returns:
+            Decimal: Цена товара
+            
+        Raises:
+            ValueError: Если товар не найден
+        """
+        # Получаем объект мебели и его цену
+        if furniture_type == "bookshelf":
+            furniture = db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
+        elif furniture_type == "nightstand":
+            furniture = db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
+        elif furniture_type == "dresser":
+            furniture = db.query(Dresser).filter(Dresser.id == furniture_id).first()
+        else:
+            raise ValueError(f"Неверный тип мебели: {furniture_type}")
+        
+        if not furniture:
+            raise ValueError(f"Товар {furniture_type} {furniture_id} не найден")
+        
+        # TODO: Здесь будет логика расчёта цены с учётом конфигурации
+        # Пока возвращаем базовую цену
+        return Decimal(str(furniture.base_price)) if hasattr(furniture, 'base_price') else Decimal("0.00")
+
+    def _validate_furniture_exists(
+        self,
+        db: Session,
+        furniture_type: str,
+        furniture_id: str
+    ) -> None:
+        """
+        Проверить, что товар существует в БД
+        
+        Args:
+            db: Database session
+            furniture_type: Тип мебели
+            furniture_id: ID мебели
+            
+        Raises:
+            ValueError: Если товар не найден
+        """
+        if furniture_type == "bookshelf":
+            furniture = db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
+        elif furniture_type == "nightstand":
+            furniture = db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
+        elif furniture_type == "dresser":
+            furniture = db.query(Dresser).filter(Dresser.id == furniture_id).first()
+        else:
+            raise ValueError(f"Неверный тип мебели: {furniture_type}")
+        
+        if not furniture:
+            raise ValueError(f"Товар {furniture_type} {furniture_id} не найден")

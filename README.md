@@ -47,7 +47,7 @@ python3 -m pytest tests/ -v --coverage
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 176 тестов проходят ✅
+**Статистика:** 156 тестов проходят ✅
 
 ### Frontend
 
@@ -253,7 +253,7 @@ MIT License — подробности в файле `LICENSE`
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 176 тестов |
+| Тесты бэкенда | ✅ 156 тестов |
 | Тесты фронтенда | ✅ 461 тест |
 
 **Общий прогресс:** ~60-70%
@@ -351,6 +351,23 @@ new_price = cart_item.recalculate_price(db)
 - `furniture_type`: только `bookshelf`, `nightstand`, `dresser`
 - `quantity`: от 1 до 99
 - `unit_price`: `Decimal >= 0`
+
+### CartService
+
+**Бизнес-логика корзины:**
+
+| Метод | Описание |
+|-------|----------|
+| `get_or_create_cart(user_id, session_id)` | Получить/создать корзину (приоритет: user_id > session_id) |
+| `get_cart_by_user_id(user_id)` | Получить корзину пользователя |
+| `get_cart_by_session_id(session_id)` | Получить гостевую корзину |
+| `add_item(cart_id, item_data, configuration)` | Добавить товар в корзину |
+| `update_item_quantity(cart_id, item_id, quantity)` | Обновить количество (≤ 0 → удалить) |
+| `remove_item(cart_id, item_id)` | Удалить товар из корзины |
+| `clear_cart(cart_id)` | Очистить корзину |
+| `merge_carts(guest_session_id, user_id)` | Объединить гостевую корзину с пользовательской |
+| `_calculate_subtotal(cart_id)` | Расчёт подытога |
+| `_calculate_items_count(cart_id)` | Расчёт количества товаров |
 
 ---
 
