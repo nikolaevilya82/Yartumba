@@ -20,6 +20,7 @@
 | Тип | Описание |
 |-----|----------|
 | 📚 **Книжные полки** | Открытые, закрытые, комбинированные |
+
 | 🛏️ **Прикроватные тумбы** | С ящиками, с полкой, на ножках |
 | 🗄️ **Комоды** | Стандартные, с зеркалом, угловые |
 
@@ -368,6 +369,27 @@ new_price = cart_item.recalculate_price(db)
 | `merge_carts(guest_session_id, user_id)` | Объединить гостевую корзину с пользовательской |
 | `_calculate_subtotal(cart_id)` | Расчёт подытога |
 | `_calculate_items_count(cart_id)` | Расчёт количества товаров |
+
+### Cart Dependencies
+
+**Зависимости для получения корзины:**
+
+| Зависимость | Описание |
+|-------------|----------|
+| `get_cart` | Получить/создать объект корзины |
+| `get_cart_id` | Получить ID корзины (через get_cart, DRY) |
+| `get_cart_item_by_id` | Получить товар из корзины с валидацией |
+| `get_cart_identifier` | Определить user_id/session_id |
+
+**API Routes (SRP):**
+
+| Файл | Методы | Путь |
+|------|--------|------|
+| `routes/get.py` | `GET` | `/cart` |
+| `routes/post.py` | `POST` | `/cart/items` |
+| `routes/patch.py` | `PATCH` | `/cart/items/{item_id}` |
+| `routes/delete.py` | `DELETE` | `/cart/items/{item_id}`, `/cart` |
+| `routes/merge.py` | `POST` | `/cart/merge` |
 
 ---
 

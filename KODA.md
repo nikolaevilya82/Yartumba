@@ -132,8 +132,15 @@ app/
 │           │   ├── routes.py
 │           │   └── schemas.py
 │           └── cart/
-│               ├── routes.py      # CRUD корзины
-│               └── schemas.py     # Pydantic схемы корзины
+│               ├── dependencies.py    # Зависимости корзины (get_cart, get_cart_id)
+│               ├── routes/            # Эндпоинты по HTTP методам (SRP)
+│               │   ├── __init__.py
+│               │   ├── get.py         # GET /cart
+│               │   ├── post.py        # POST /cart/items
+│               │   ├── patch.py       # PATCH /cart/items/{item_id}
+│               │   ├── delete.py      # DELETE /cart/items/{item_id}, DELETE /cart
+│               │   └── merge.py       # POST /cart/merge
+│               └── schemas.py         # Pydantic схемы корзины
 ├── services/             # Бизнес-логика
 │   ├── configurator_service.py  # Расчёт стоимости, валидация
 │   └── cart_service.py          # Логика корзины
@@ -387,7 +394,7 @@ alembic downgrade -1
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 176 тестов |
+| Тесты бэкенда | ✅ 156 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 
 **Общий прогресс:** ~60-70%
