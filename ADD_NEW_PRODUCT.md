@@ -13,7 +13,10 @@
 | 7 | `app/api/v1/goods/<product>/routes.py` | API эндпоинты |
 | 8 | `app/api/v1/goods/router.py` | Подключить роутер |
 | 9 | `app/api/v1/router.py` | Подключить если новый раздел |
-| 10 | `app/services/configurator_service.py` | Добавить валидацию и расчёт для нового типа |
+| 10 | `app/services/configurator/calculators/<product>_calculator.py` | Добавить калькулятор (наследовать `BaseCostCalculator`) |
+| 11 | `app/services/configurator/validators.py` | Добавить валидатор (наследовать `BaseValidator`) |
+| 12 | `app/services/configurator/calculators/__init__.py` | Добавить в фабрику `CALCULATORS` |
+| 13 | `app/services/configurator/validators.py` | Добавить в фабрику `VALIDATORS` |
 | 11 | `tests/goods/test_<product>.py` | Unit тесты модели |
 | 12 | `tests/schemas/test_<product>_schema.py` | Тесты Pydantic схем |
 | 13 | `tests/integration/placeholder/` | Добавить placeholder тесты |
@@ -61,20 +64,52 @@ alembic upgrade head
 
 ## Конфигуратор
 
-Не забыть добавить в `app/services/configurator_service.py`:
+Новый API конфигуратора использует паттерн Factory и SRP:
 
+**1. Создать калькулятор:**
 ```python
-def validate_<product>_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
-    """Валидация конфигурации <product>"""
-    errors = []
-    # ... валидация
-    
-    return {"valid": len(errors) == 0, "errors": errors}
+# app/services/configurator/calculators/<product>_calculator.py
+from app.services.configurator.calculators.base_calculator import BaseCostCalculator
 
-def calculate_<product>_cost(self, config: Dict[str, Any]) -> Dict[str, Any]:
-    """Расчёт стоимости <product>"""
-    # ... расчёт
-    return {"total_price": price, ...}
+class ProductCalculator(BaseCostCalculator):
+    def calculate(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        # Расчёт стоимости
+        pass
+```
+
+**2. Создать валидатор:**
+```python
+# app/services/configurator/validators.py
+from app.services.configurator.validators import BaseValidator
+
+class ProductValidator(BaseValidator):
+    def validate(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        # Валидация
+        pass
+```
+
+**3. Добавить в фабрики:**
+```python
+# calculators/__init__.py
+CALCULATORS = {
+    # ...
+    "product": ProductCalculator,
+}
+
+# validators.py
+VALIDATORS = {
+    # ...
+    "product": ProductValidator(),
+}
+```
+
+**Использование:**
+```python
+from app.services.configurator import create_configurator_service
+
+service = create_configurator_service(db)
+cost = service.calculate("product", config)
+validation = service.validate("product", config)
 ```
 
 ## Проверка

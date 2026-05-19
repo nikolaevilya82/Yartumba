@@ -106,6 +106,9 @@ class TestBookshelfValidation:
             "height": 1800,
             "depth": 300,
             "shelf_count": 4,
+            "bodyMaterial": {
+                "sheetMaterialId": "00000000-0000-0000-0000-000000000000",  # UUID-заглушка
+            },
         })
         
         assert result["valid"] is True
@@ -146,6 +149,9 @@ class TestDresserValidation:
             "height": 850,
             "depth": 450,
             "drawer_count": 4,
+            "bodyMaterial": {
+                "sheetMaterialId": "00000000-0000-0000-0000-000000000000",  # UUID-заглушка
+            },
         })
         
         assert result["valid"] is True
