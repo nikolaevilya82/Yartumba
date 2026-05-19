@@ -138,13 +138,18 @@ class CartItem(Base):
             return float(self.unit_price)
         
         # Используем конфигуратор для расчёта
-        from app.services.configurator_service import calculate_furniture_price
+        from app.services.configurator import create_configurator_service
         
-        price = calculate_furniture_price(
-            furniture_type=self.product_type,
-            configuration=self.configuration,
-            db=db
-        )
+        service = create_configurator_service(db)
+        
+        # Определяем тип мебели для конфигуратора
+        furniture_type = self.product_type  # bookshelf, nightstand, dresser
+        
+        # Расчёт стоимости через конфигуратор
+        result = service.calculate(furniture_type, self.configuration)
+        
+        # Получаем итоговую цену из результата (в копейках)
+        price = result.get("total_price", float(self.unit_price))
         
         self.unit_price = price
         self.total_price = price * self.quantity

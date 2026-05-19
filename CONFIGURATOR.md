@@ -131,25 +131,6 @@ cost = CostBreakdown(**cost_dict)
 
 ---
 
-## 🔄 Обратная совместимость
-
-Старый API продолжает работать через обёртки:
-
-```python
-# ⚠️ ДЕПРЕЦИРОВАНО - используйте новый API
-from app.services.configurator_service import (
-    get_materials_options,
-    calculate_nightstand_cost,
-    validate_nightstand_config,
-    validate_bookshelf_config,
-    validate_dresser_config,
-)
-```
-
-**Рекомендация:** Постепенно мигрировать на новый API `app.services.configurator`.
-
----
-
 ## 🧪 Тестирование
 
 Все существующие тесты проходят:

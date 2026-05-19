@@ -2,15 +2,25 @@
 Тесты расчёта стоимости конфигуратора
 """
 import pytest
-from app.services.configurator_service import ConfiguratorService
+from app.core.db_setup import SessionLocal
+from app.services.configurator import create_configurator_service
+
+
+@pytest.fixture
+def service():
+    """Фикстура сервиса конфигуратора"""
+    db = SessionLocal()
+    try:
+        yield create_configurator_service(db)
+    finally:
+        db.close()
 
 
 class TestNightstandCostCalculation:
     """Тесты расчёта стоимости тумбы"""
 
-    def test_calculate_basic_cost(self):
+    def test_calculate_basic_cost(self, service):
         """Базовый расчёт стоимости"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -19,16 +29,15 @@ class TestNightstandCostCalculation:
             "hardware": {},
             "drawers": {"count": 2},
         }
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         
         assert "materials_cost" in result
         assert "hardware_cost" in result
         assert "work_cost" in result
         assert "total_price" in result
 
-    def test_cost_breakdown_sum(self):
+    def test_cost_breakdown_sum(self, service):
         """Сумма компонентов равна итогу"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -37,7 +46,7 @@ class TestNightstandCostCalculation:
             "hardware": {},
             "drawers": {"count": 2},
         }
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         
         calculated_sum = (
             result["materials_cost"] +
@@ -46,9 +55,8 @@ class TestNightstandCostCalculation:
         )
         assert calculated_sum == result["total_price"]
 
-    def test_details_included(self):
+    def test_details_included(self, service):
         """В ответе есть детализация"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -57,16 +65,15 @@ class TestNightstandCostCalculation:
             "hardware": {},
             "drawers": {"count": 2},
         }
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         
         assert "details" in result
         assert "sheet_material_area_m2" in result["details"]
         assert "hinges_count" in result["details"]
         assert "slides_count" in result["details"]
 
-    def test_zero_drawers_cost(self):
+    def test_zero_drawers_cost(self, service):
         """Расчёт с одним ящиком"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -75,14 +82,13 @@ class TestNightstandCostCalculation:
             "hardware": {},
             "drawers": {"count": 1},
         }
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         
         assert result["details"]["hinges_count"] == 2
         assert result["details"]["slides_count"] == 1
 
-    def test_multiple_drawers_cost(self):
+    def test_multiple_drawers_cost(self, service):
         """Расчёт с несколькими ящиками"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -91,7 +97,7 @@ class TestNightstandCostCalculation:
             "hardware": {},
             "drawers": {"count": 3},
         }
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         
         assert result["details"]["hinges_count"] == 6
         assert result["details"]["slides_count"] == 3

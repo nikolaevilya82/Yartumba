@@ -13,11 +13,11 @@
 | 7 | `app/api/v1/goods/<product>/routes.py` | API эндпоинты |
 | 8 | `app/api/v1/goods/router.py` | Подключить роутер |
 | 9 | `app/api/v1/router.py` | Подключить если новый раздел |
-| 10 | `app/services/configurator/calculators/<product>_calculator.py` | Добавить калькулятор (наследовать `BaseCostCalculator`) |
+| 10 | `app/services/configurator/calculators/<product>_calculator.py` | Добавить калькулятор (наследовать `FurnitureCostCalculator`) |
 | 11 | `app/services/configurator/validators.py` | Добавить валидатор (наследовать `BaseValidator`) |
 | 12 | `app/services/configurator/calculators/__init__.py` | Добавить в фабрику `CALCULATORS` |
 | 13 | `app/services/configurator/validators.py` | Добавить в фабрику `VALIDATORS` |
-| 11 | `tests/goods/test_<product>.py` | Unit тесты модели |
+| 14 | `tests/goods/test_<product>.py` | Unit тесты модели |
 | 12 | `tests/schemas/test_<product>_schema.py` | Тесты Pydantic схем |
 | 13 | `tests/integration/placeholder/` | Добавить placeholder тесты |
 | 14 | `frontend/src/core/constants/product.constants.ts` | Добавить тип в `FurnitureType` |
@@ -69,12 +69,55 @@ alembic upgrade head
 **1. Создать калькулятор:**
 ```python
 # app/services/configurator/calculators/<product>_calculator.py
-from app.services.configurator.calculators.base_calculator import BaseCostCalculator
+from app.services.configurator.calculators.furniture_calculator import FurnitureCostCalculator
 
-class ProductCalculator(BaseCostCalculator):
+class ProductCalculator(FurnitureCostCalculator):
     def calculate(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        # Расчёт стоимости
-        pass
+        # Используем универсальные методы:
+        # - calculate_body_area() - площадь материалов
+        # - calculate_edge_length() - длина кромки
+        # - calculate_sheet_cost() - стоимость материала
+        # - calculate_edge_cost() - стоимость кромки
+        # - calculate_hinge_cost() - стоимость петель
+        # - calculate_slide_cost() - стоимость направляющих
+        # - add_work_cost() - стоимость работы
+        # - format_result() - форматирование результата
+        
+        total_area, area_details = self.calculate_body_area(
+            width=config["width"],
+            height=config["height"],
+            depth=config["depth"],
+            shelf_count=config.get("shelf_count", 0),
+            facade_count=config.get("facade_count", 0),
+            has_back_panel=config.get("has_back_panel", False)
+        )
+        
+        total_edge, edge_details = self.calculate_edge_length(
+            width=config["width"],
+            height=config["height"],
+            depth=config["depth"],
+            shelf_count=config.get("shelf_count", 0),
+            facade_count=config.get("facade_count", 0),
+            has_back_panel=config.get("has_back_panel", False)
+        )
+        
+        sheet_cost = self.calculate_sheet_cost(total_area, material_id)
+        edge_cost = self.calculate_edge_cost(total_edge, edge_id)
+        materials_cost = sheet_cost + edge_cost
+        
+        hardware_cost = self.calculate_hinge_cost(count, hinge_id)
+        
+        work_cost = self.add_work_cost(materials_cost, hardware_cost, rate=0.3)
+        
+        total_cost = self.calculate_total(materials_cost, hardware_cost, work_cost)
+        
+        return self.format_result(
+            materials_cost=materials_cost,
+            hardware_cost=hardware_cost,
+            work_cost=work_cost,
+            total_cost=total_cost,
+            details={...}
+        )
 ```
 
 **2. Создать валидатор:**

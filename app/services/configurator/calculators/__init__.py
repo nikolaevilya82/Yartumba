@@ -1,7 +1,7 @@
 """
 Калькуляторы стоимости мебели
 """
-from app.services.configurator.calculators.base_calculator import BaseCostCalculator
+from app.services.configurator.calculators.furniture_calculator import FurnitureCostCalculator
 from app.services.configurator.calculators.nightstand_calculator import NightstandCalculator
 from app.services.configurator.calculators.bookshelf_calculator import BookshelfCalculator
 from app.services.configurator.calculators.dresser_calculator import DresserCalculator
@@ -35,7 +35,7 @@ def get_calculator(furniture_type: str, db):
 
 
 __all__ = [
-    "BaseCostCalculator",
+    "FurnitureCostCalculator",
     "NightstandCalculator",
     "BookshelfCalculator",
     "DresserCalculator",
