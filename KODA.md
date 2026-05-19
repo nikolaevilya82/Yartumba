@@ -147,14 +147,14 @@ app/
 │   │   ├── configurator_service.py  # Главный сервис (оркестрация)
 │   │   ├── validators.py            # Валидаторы по типам мебели
 │   │   ├── calculators/             # Калькуляторы стоимости
-│   │   │   ├── base_calculator.py   # Базовый класс
+│   │   │   ├── furniture_calculator.py  # Универсальный калькулятор (общая логика)
 │   │   │   ├── nightstand_calculator.py
 │   │   │   ├── bookshelf_calculator.py
-│   │   │   └── dresser_calculator.py
+│   │   │   ├── dresser_calculator.py
+│   │   │   └── README.md          # Документация по расчётам
 │   │   ├── material_options.py      # Получение материалов
 │   │   ├── constants.py             # Константы (размеры, проценты)
 │   │   └── schemas.py               # Pydantic схемы
-│   ├── configurator_service.py  # ⚠️ ДЕПРЕЦИРОВАНО (обёртка)
 │   └── cart_service.py          # Логика корзины
 └── core/                 # База, конфиг, DI
     ├── db_setup.py       # SQLAlchemy engine, SessionLocal, Base
@@ -240,7 +240,7 @@ app/
 8. **Документация** — доступна по `/docs` (Swagger) и `/redoc` (ReDoc)
 9. **CartItem** — использует JSONB для конфигурации, FK на products и furniture_id для конкретной мебели
 10. **Pydantic схемы корзины** — созданы по принципу SRP: CartBase, CartCreate, CartUpdate, CartResponse, CartItemBase, CartItemCreate, CartItemUpdate, CartItemResponse
-11. **Конфигуратор** — рефакторинг 2025: новые API в `app/services/configurator/`, старый API deprecated
+11. **Конфигуратор** — рефакторинг 2025: полный переход на новый API в `app/services/configurator/`
 12. **Использование конфигуратора:**
     ```python
     from app.services.configurator import create_configurator_service
@@ -355,7 +355,7 @@ python3 -m pytest tests/ -v --coverage
 ```
 
 **Статистика:**
-- **156 тестов проходят** ✅
+- **176 тестов проходят** ✅
 
 ### Фронтенд
 
@@ -411,7 +411,7 @@ alembic downgrade -1
 |-----------|--------|
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
-| Конфигуратор | 🟡 В разработке |
+| Конфигуратор | ✅ Готово |
 | Корзина | 🟡 Модель готова |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |

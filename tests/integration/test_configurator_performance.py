@@ -4,16 +4,26 @@
 import pytest
 import time
 import concurrent.futures
-from app.services.configurator_service import ConfiguratorService
+from app.core.db_setup import SessionLocal
+from app.services.configurator import create_configurator_service
+
+
+@pytest.fixture
+def service():
+    """Фикстура сервиса конфигуратора"""
+    db = SessionLocal()
+    try:
+        yield create_configurator_service(db)
+    finally:
+        db.close()
 
 
 @pytest.mark.slow
 class TestConfiguratorPerformance:
     """Тесты производительности"""
 
-    def test_calculation_within_100ms(self):
+    def test_calculation_within_100ms(self, service):
         """Расчёт в течение 100мс"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -24,15 +34,14 @@ class TestConfiguratorPerformance:
         }
         
         start = time.time()
-        result = service.calculate_nightstand_cost(config)
+        result = service.calculate("nightstand", config)
         elapsed = (time.time() - start) * 1000
         
         assert result["total_price"] >= 0
         assert elapsed < 100, f"Расчёт занял {elapsed:.2f}мс, должно быть < 100мс"
 
-    def test_validation_within_50ms(self):
+    def test_validation_within_50ms(self, service):
         """Валидация в течение 50мс"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -43,15 +52,14 @@ class TestConfiguratorPerformance:
         }
         
         start = time.time()
-        result = service.validate_nightstand_config(config)
+        result = service.validate("nightstand", config)
         elapsed = (time.time() - start) * 1000
         
         assert result["valid"] is True
         assert elapsed < 50, f"Валидация заняла {elapsed:.2f}мс, должно быть < 50мс"
 
-    def test_concurrent_configurations(self):
+    def test_concurrent_configurations(self, service):
         """Параллельные конфигурации"""
-        service = ConfiguratorService()
         config = {
             "width": 500,
             "height": 600,
@@ -62,7 +70,7 @@ class TestConfiguratorPerformance:
         }
         
         def make_request(_):
-            return service.calculate_nightstand_cost(config)
+            return service.calculate("nightstand", config)
         
         start = time.time()
         

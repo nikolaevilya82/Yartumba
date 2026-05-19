@@ -5,7 +5,8 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.services.configurator_service import configurator_service
+from app.core.db_setup import SessionLocal
+from app.services.configurator import create_configurator_service
 
 router = APIRouter(prefix="/configurator", tags=["configurator"])
 
@@ -45,7 +46,12 @@ async def get_configurator_options():
     - supports: Опоры/ножки
     - wall_mounts: Крепления для подвесной мебели
     """
-    return configurator_service.get_materials_options()
+    db = SessionLocal()
+    try:
+        service = create_configurator_service(db)
+        return service.get_material_options()
+    finally:
+        db.close()
 
 
 @router.post("/validate")
@@ -61,19 +67,25 @@ async def validate_configuration(data: ConfigurationValidate):
     furniture_type = data.furniture_type
     config = data.configuration
     
-    if furniture_type == "nightstand":
-        result = configurator_service.validate_nightstand_config(config)
-    elif furniture_type == "bookshelf":
-        result = configurator_service.validate_bookshelf_config(config)
-    elif furniture_type == "dresser":
-        result = configurator_service.validate_dresser_config(config)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Неизвестный тип мебели: {furniture_type}"
-        )
-    
-    return result
+    db = SessionLocal()
+    try:
+        service = create_configurator_service(db)
+        
+        if furniture_type == "nightstand":
+            result = service.validate("nightstand", config)
+        elif furniture_type == "bookshelf":
+            result = service.validate("bookshelf", config)
+        elif furniture_type == "dresser":
+            result = service.validate("dresser", config)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Неизвестный тип мебели: {furniture_type}"
+            )
+        
+        return result
+    finally:
+        db.close()
 
 
 @router.post("/calculate")
@@ -91,12 +103,18 @@ async def calculate_configuration(data: ConfigurationCalculate):
     furniture_type = data.furniture_type
     config = data.configuration
     
-    if furniture_type == "nightstand":
-        result = configurator_service.calculate_nightstand_cost(config)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Расчёт для типа '{furniture_type}' ещё не реализован"
-        )
-    
-    return result
+    db = SessionLocal()
+    try:
+        service = create_configurator_service(db)
+        
+        if furniture_type == "nightstand":
+            result = service.calculate("nightstand", config)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Расчёт для типа '{furniture_type}' ещё не реализован"
+            )
+        
+        return result
+    finally:
+        db.close()
