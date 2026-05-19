@@ -16,16 +16,6 @@ afterAll(() => {
   // server.close()
 })
 
-// Моки localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-
-global.localStorage = localStorageMock
-
 // Моки window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

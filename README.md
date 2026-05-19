@@ -20,6 +20,7 @@
 | Тип | Описание |
 |-----|----------|
 | 📚 **Книжные полки** | Открытые, закрытые, комбинированные |
+
 | 🛏️ **Прикроватные тумбы** | С ящиками, с полкой, на ножках |
 | 🗄️ **Комоды** | Стандартные, с зеркалом, угловые |
 
@@ -47,7 +48,7 @@ python3 -m pytest tests/ -v --coverage
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 130 тестов проходят ✅
+**Статистика:** 156 тестов проходят ✅
 
 ### Frontend
 
@@ -73,7 +74,8 @@ npm run test tests/unit/core/utils/
 **Статистика:**
 - 113 unit тестов утилит проходят ✅
 - 148 API тестов (client, endpoints, services) проходят ✅
-- **Всего:** 261 тест ✅
+- 200 тестов сторов (UI, Cart, Configurator) проходят ✅
+- **Всего:** 497 тестов ✅
 
 ## 🚀 Быстрый старт
 
@@ -85,12 +87,37 @@ cd Yartumba
 # Установка зависимостей
 pip install -r requirements.txt
 
+# Создание .env файла
+cp .env.example .env
+
+# Настройка DATABASE_URL в .env
+# DATABASE_URL=postgresql://username:password@localhost:5432/yartumba
+
 # Запуск миграций
 alembic upgrade head
 
 # Запуск сервера
 uvicorn main:app --reload
 ```
+
+## 🗄️ Миграции Alembic
+
+```bash
+# Создание новой миграции
+alembic revision --autogenerate -m "description"
+
+# Применение миграций
+alembic upgrade head
+
+# Откат миграции
+alembic downgrade -1
+
+# Текущая версия
+alembic current
+```
+
+**Текущие миграции:**
+- `001_update_cart_item_with_jsonb_and_product_fk` — обновление модели корзины (JSONB, FK на products, furniture_id)
 
 ## 📁 Структура проекта
 
@@ -122,10 +149,20 @@ Yartumba/
 │       ├── unit/
 │       │   ├── core/
 │       │   │   └── utils/      # Unit тесты утилит (113 тестов)
-│       │   └── api/            # API тесты (148 тестов)
-│       │       ├── client.test.ts
-│       │       ├── endpoints/
-│       │       └── services/
+│       │   ├── api/            # API тесты (148 тестов)
+│       │   │   ├── client.test.ts
+│       │   │   ├── endpoints/
+│       │   │   └── services/
+│       │   ├── stores/         # Тесты сторов (200 тестов)
+│       │   │   ├── ui/
+│       │   │   ├── cart/
+│       │   │   └── configurator/
+│       │   └── hooks/          # Тесты хуков (36 тестов)
+│       │       ├── useDebounce.test.ts
+│       │       ├── useLocalStorage.test.ts
+│       │       ├── useMediaQuery.test.ts
+│       │       ├── useCart.test.ts
+│       │       └── useConfigurator.test.ts
 ├── KODA.md              # Контекст для AI-ассистента
 └── README.md            # Документация проекта
 ```
@@ -213,14 +250,146 @@ MIT License — подробности в файле `LICENSE`
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | 🟡 В разработке |
-| Корзина | ⏸️ Не реализовано |
+| Корзина | 🟡 Модель готова |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 130 тестов |
-| Тесты фронтенда | ✅ 261 тест |
+| Тесты бэкенда | ✅ 156 тестов |
+| Тесты фронтенда | ✅ 461 тест |
 
-**Общий прогресс:** ~55-65%
+**Общий прогресс:** ~60-70%
+
+---
+
+## 🛒 Модель корзины
+
+### Структура CartItem
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | UUID | Уникальный ID позиции |
+| `cart_id` | UUID | Ссылка на корзину |
+| `product_id` | UUID | FK на products (каталог) |
+| `product_type` | String | bookshelf, nightstand, dresser |
+| `furniture_id` | UUID | ID конкретной мебели |
+| `configuration` | JSONB | Конфигурация товара |
+| `quantity` | Integer | Количество |
+| `unit_price` | Numeric(10,2) | Цена за единицу |
+| `total_price` | Numeric(10,2) | Итоговая цена |
+| `materials_snapshot` | JSONB | Снепшот материалов |
+| `created_at` | DateTime | Дата создания |
+| `updated_at` | DateTime | Дата обновления |
+
+### Структура configuration по типам
+
+**Bookshelf:**
+```json
+{
+  "dimensions": {"width": 800, "height": 1800, "depth": 300},
+  "parts": [
+    {"type": "side_panel", "material_id": "uuid", "quantity": 2},
+    {"type": "shelf", "material_id": "uuid", "quantity": 4}
+  ],
+  "back_panel": {"material_id": "uuid", "thickness": 8}
+}
+```
+
+**Nightstand:**
+```json
+{
+  "dimensions": {"width": 500, "height": 450, "depth": 400},
+  "parts": [{"type": "side_panel", "material_id": "uuid", "quantity": 2}],
+  "drawers": [
+    {"drawer_id": "uuid", "slide_guide_id": "uuid", "facade_material_id": "uuid"}
+  ],
+  "facade_material_id": "uuid"
+}
+```
+
+**Dresser:**
+```json
+{
+  "dimensions": {"width": 1200, "height": 800, "depth": 500},
+  "parts": [...],
+  "drawers": [...],
+  "top_material_id": "uuid",
+  "hinge_id": "uuid"
+}
+```
+
+### Методы CartItem
+
+```python
+# Получить объект мебели
+furniture = cart_item.get_furniture_object(db)
+
+# Пересчитать цену на основе текущих материалов
+new_price = cart_item.recalculate_price(db)
+```
+
+### Pydantic схемы корзины
+
+**По принципу SRP:**
+
+| Схема | Назначение |
+|-------|-----------|
+| `CartBase` | Базовые поля (`user_id`, `session_id`) |
+| `CartCreate` | Создание корзины |
+| `CartUpdate` | Обновление корзины |
+| `CartResponse` | Полный ответ корзины |
+| `CartItemBase` | Базовые поля позиции |
+| `CartItemCreate` | Создание позиции (валидация furniture_type, quantity 1-99) |
+| `CartItemUpdate` | Обновление позиции |
+| `CartItemResponse` | Полный ответ позиции |
+| `CartSummary` | Краткое резюме |
+
+**Вычисляемые поля:**
+- `CartResponse.items_count` — общее количество товаров
+- `CartResponse.subtotal` — итоговая сумма
+- `CartItemResponse.item_total` — сумма позиции (quantity × unit_price)
+
+**Валидация:**
+- `furniture_type`: только `bookshelf`, `nightstand`, `dresser`
+- `quantity`: от 1 до 99
+- `unit_price`: `Decimal >= 0`
+
+### CartService
+
+**Бизнес-логика корзины:**
+
+| Метод | Описание |
+|-------|----------|
+| `get_or_create_cart(user_id, session_id)` | Получить/создать корзину (приоритет: user_id > session_id) |
+| `get_cart_by_user_id(user_id)` | Получить корзину пользователя |
+| `get_cart_by_session_id(session_id)` | Получить гостевую корзину |
+| `add_item(cart_id, item_data, configuration)` | Добавить товар в корзину |
+| `update_item_quantity(cart_id, item_id, quantity)` | Обновить количество (≤ 0 → удалить) |
+| `remove_item(cart_id, item_id)` | Удалить товар из корзины |
+| `clear_cart(cart_id)` | Очистить корзину |
+| `merge_carts(guest_session_id, user_id)` | Объединить гостевую корзину с пользовательской |
+| `_calculate_subtotal(cart_id)` | Расчёт подытога |
+| `_calculate_items_count(cart_id)` | Расчёт количества товаров |
+
+### Cart Dependencies
+
+**Зависимости для получения корзины:**
+
+| Зависимость | Описание |
+|-------------|----------|
+| `get_cart` | Получить/создать объект корзины |
+| `get_cart_id` | Получить ID корзины (через get_cart, DRY) |
+| `get_cart_item_by_id` | Получить товар из корзины с валидацией |
+| `get_cart_identifier` | Определить user_id/session_id |
+
+**API Routes (SRP):**
+
+| Файл | Методы | Путь |
+|------|--------|------|
+| `routes/get.py` | `GET` | `/cart` |
+| `routes/post.py` | `POST` | `/cart/items` |
+| `routes/patch.py` | `PATCH` | `/cart/items/{item_id}` |
+| `routes/delete.py` | `DELETE` | `/cart/items/{item_id}`, `/cart` |
+| `routes/merge.py` | `POST` | `/cart/merge` |
 
 ---
 

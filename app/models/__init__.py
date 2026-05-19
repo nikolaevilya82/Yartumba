@@ -36,6 +36,9 @@ from app.models.materials import (
     WallMount,
 )
 
+# Корзина
+from app.models.cart import Cart, CartItem
+
 __all__ = [
     # Catalog
     "Category",
@@ -55,6 +58,9 @@ __all__ = [
     "EdgeMaterial",
     "Support",
     "WallMount",
+    # Cart
+    "Cart",
+    "CartItem",
     # Catalog (continued)
     "AttributeType",
     "SizeUnit",
