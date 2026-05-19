@@ -142,7 +142,19 @@ app/
 │               │   └── merge.py       # POST /cart/merge
 │               └── schemas.py         # Pydantic схемы корзины
 ├── services/             # Бизнес-логика
-│   ├── configurator_service.py  # Расчёт стоимости, валидация
+│   ├── configurator/         # Конфигуратор (рефакторинг 2025)
+│   │   ├── __init__.py
+│   │   ├── configurator_service.py  # Главный сервис (оркестрация)
+│   │   ├── validators.py            # Валидаторы по типам мебели
+│   │   ├── calculators/             # Калькуляторы стоимости
+│   │   │   ├── base_calculator.py   # Базовый класс
+│   │   │   ├── nightstand_calculator.py
+│   │   │   ├── bookshelf_calculator.py
+│   │   │   └── dresser_calculator.py
+│   │   ├── material_options.py      # Получение материалов
+│   │   ├── constants.py             # Константы (размеры, проценты)
+│   │   └── schemas.py               # Pydantic схемы
+│   ├── configurator_service.py  # ⚠️ ДЕПРЕЦИРОВАНО (обёртка)
 │   └── cart_service.py          # Логика корзины
 └── core/                 # База, конфиг, DI
     ├── db_setup.py       # SQLAlchemy engine, SessionLocal, Base
@@ -228,6 +240,16 @@ app/
 8. **Документация** — доступна по `/docs` (Swagger) и `/redoc` (ReDoc)
 9. **CartItem** — использует JSONB для конфигурации, FK на products и furniture_id для конкретной мебели
 10. **Pydantic схемы корзины** — созданы по принципу SRP: CartBase, CartCreate, CartUpdate, CartResponse, CartItemBase, CartItemCreate, CartItemUpdate, CartItemResponse
+11. **Конфигуратор** — рефакторинг 2025: новые API в `app/services/configurator/`, старый API deprecated
+12. **Использование конфигуратора:**
+    ```python
+    from app.services.configurator import create_configurator_service
+
+    service = create_configurator_service(db)
+    cost = service.calculate("nightstand", config)
+    validation = service.validate("bookshelf", config)
+    options = service.get_material_options()
+    ```
 
 ---
 
