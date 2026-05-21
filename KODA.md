@@ -405,6 +405,75 @@ alembic downgrade -1
 
 ---
 
+## Фронтенд Архитектура
+
+```
+frontend/src/
+├── main.jsx                  # Точка входа (с BrowserRouter)
+├── App.jsx                   # Главный компонент (с CatalogProvider)
+├── core/
+│   ├── styles/
+│   │   └── global.css        # Глобальные стили
+│   ├── types/
+│   │   ├── catalog.types.ts  # Типы каталога
+│   │   ├── common.types.ts   # Общие типы (UUID)
+│   │   └── api.types.ts      # API типы
+│   ├── constants/
+│   │   ├── product.constants.ts  # Типы мебели, иконки
+│   │   └── configurator.constants.ts
+│   └── config/
+│       ├── routes.config.ts  # Маршруты (ROUTES)
+│       └── app.config.ts
+├── api/
+│   ├── client.ts             # HTTP клиент
+│   ├── endpoints/            # Эндпоинты API
+│   └── services/
+│       ├── catalog.service.ts    # API каталога
+│       ├── cart.service.ts       # API корзины
+│       └── configurator.service.ts
+├── stores/
+│   ├── catalog/
+│   │   ├── catalog.store.ts      # React hook с состоянием
+│   │   ├── catalog.context.tsx   # React Context для каталога
+│   │   └── index.ts              # Экспорт (CatalogProvider, useCatalog)
+│   ├── cart/                 # Корзина (MobX)
+│   ├── configurator/         # Конфигуратор (MobX)
+│   └── ui/                   # UI сторы (MobX)
+├── components/
+│   ├── catalog/
+│   │   ├── ProductCard.jsx       # Карточка товара
+│   │   ├── ProductFilters.jsx    # Фильтры
+│   │   ├── ProductList.jsx       # Список товаров
+│   │   └── ProductSkeleton.jsx   # Загрузка
+│   ├── common/               # Общие компоненты
+│   └── ui/                   # UI Kit
+├── pages/
+│   ├── catalog/
+│   │   └── CatalogPage.jsx       # Страница каталога
+│   ├── configurator/
+│   │   └── ConfiguratorPage.jsx  # Страница конфигуратора
+│   ├── cart/
+│   │   └── CartPage.jsx          # Корзина
+│   └── auth/
+│       ├── LoginPage.jsx
+│       └── RegisterPage.jsx
+└── routes/
+    └── AppRoutes.jsx         # Роутер (Routes, Route)
+```
+
+**Frontend зависимости:**
+- `react-router-dom` — роутинг
+- `mobx` + `mobx-react-lite` — управление состоянием (MobX для сложных стор)
+- `axios` — HTTP запросы
+
+**Управление состоянием:**
+- **Каталог** — React Context + useState (простое состояние)
+- **Корзина** — MobX (сложная логика, асинхронность)
+- **Конфигуратор** — MobX (сложные вычисления)
+- **UI** — MobX (модальные окна, уведомления)
+
+---
+
 ## Статус проекта
 
 | Компонент | Статус |
@@ -415,11 +484,12 @@ alembic downgrade -1
 | Корзина | 🟡 Модель готова |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
-| Фронтенд (структура) | 🟡 В разработке |
-| Тесты бэкенда | ✅ 156 тестов |
+| Фронтенд (каталог) | ✅ Готово |
+| Фронтенд (конфигуратор) | 🟡 Заглушка |
+| Тесты бэкенда | ✅ 176 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 
-**Общий прогресс:** ~60-70%
+**Общий прогресс:** ~65-70%
 
 ---
 

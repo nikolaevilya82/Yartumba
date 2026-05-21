@@ -21,12 +21,15 @@
 | 12 | `tests/schemas/test_<product>_schema.py` | Тесты Pydantic схем |
 | 13 | `tests/integration/placeholder/` | Добавить placeholder тесты |
 | 14 | `frontend/src/core/constants/product.constants.ts` | Добавить тип в `FurnitureType` |
-| 15 | `frontend/src/core/types/product.types.ts` | Добавить TypeScript типы |
-| 16 | `frontend/src/api/endpoints/products/<product>.endpoints.ts` | Создать эндпоинты |
-| 17 | `frontend/src/api/services/<product>.service.ts` | Создать API сервис |
-| 18 | `frontend/src/modules/<product>/` | Создать модуль (компоненты, страницы) |
-| 19 | `frontend/src/core/config/routes.config.ts` | Добавить маршруты |
-| 20 | `KODA.md` | Обновить документацию |
+| 15 | `frontend/src/core/types/catalog.types.ts` | Добавить TypeScript типы |
+| 16 | `frontend/src/stores/catalog/catalog.store.ts` | Добавить React hook с состоянием |
+| 17 | `frontend/src/stores/catalog/catalog.context.tsx` | Создать Context для каталога |
+| 18 | `frontend/src/stores/catalog/index.ts` | Экспорт Provider и hook |
+| 19 | `frontend/src/components/catalog/` | Создать компоненты (ProductCard, ProductList, ProductFilters) |
+| 20 | `frontend/src/pages/catalog/` | Создать страницу каталога |
+| 21 | `frontend/src/routes/AppRoutes.jsx` | Добавить маршруты |
+| 22 | `frontend/src/App.jsx` | Добавить CatalogProvider |
+| 23 | `KODA.md` | Обновить документацию |
 
 ## Примеры для копирования
 
@@ -41,8 +44,66 @@
 
 - **Эндпоинты**: `frontend/src/api/endpoints/products/bookshelf.endpoints.ts`
 - **Сервис**: `frontend/src/api/services/bookshelf.service.ts`
-- **Типы**: `frontend/src/core/types/product.types.ts`
+- **Типы**: `frontend/src/core/types/catalog.types.ts`
 - **Константы**: `frontend/src/core/constants/product.constants.ts`
+- **Store**: `frontend/src/stores/catalog/catalog.store.ts`
+- **Context**: `frontend/src/stores/catalog/catalog.context.tsx`
+- **Компоненты**: `frontend/src/components/catalog/ProductCard.jsx`
+
+### React Context для каталога
+
+**Пример создания:**
+
+```typescript
+// frontend/src/stores/catalog/catalog.store.ts
+import { useState, useCallback } from 'react';
+
+export function useCatalogStore() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  
+  const setSelectedType = useCallback((type: FurnitureType | null) => {
+    // Логика фильтрации
+  }, []);
+  
+  return { products, filteredProducts, setSelectedType };
+}
+```
+
+```typescript
+// frontend/src/stores/catalog/catalog.context.tsx
+import React, { createContext, useContext } from 'react';
+import { useCatalogStore } from './catalog.store';
+
+const CatalogContext = createContext<ReturnType<typeof useCatalogStore> | undefined>(undefined);
+
+export function CatalogProvider({ children }) {
+  const store = useCatalogStore();
+  return <CatalogContext.Provider value={store}>{children}</CatalogContext.Provider>;
+}
+
+export function useCatalog() {
+  const context = useContext(CatalogContext);
+  if (!context) throw new Error('useCatalog must be used within CatalogProvider');
+  return context;
+}
+```
+
+**Использование в компонентах:**
+
+```jsx
+import { useCatalog } from '../../stores/catalog';
+
+const ProductFilters = () => {
+  const { selectedType, setSelectedType } = useCatalog();
+  
+  return (
+    <button onClick={() => setSelectedType('bookshelf')}>
+      Полки
+    </button>
+  );
+};
+```
 
 ### Тесты
 

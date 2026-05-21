@@ -1,0 +1,90 @@
+.product-list {
+  width: 100%;
+}
+
+.product-list__header {
+  margin-bottom: 24px;
+}
+
+.product-list__header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.product-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.product-list__error,
+.product-list__empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.error-message,
+.empty-message {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message__icon,
+.empty-message__icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.error-message p,
+.empty-message h3,
+.empty-message p {
+  margin: 8px 0;
+}
+
+.error-message p {
+  color: #666;
+}
+
+.empty-message h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.empty-message p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.error-message button,
+.empty-message button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.error-message button:hover,
+.empty-message button:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .product-list__grid {
+    grid-template-columns: 1fr;
+  }
+}

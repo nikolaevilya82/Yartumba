@@ -1,0 +1,14 @@
+.catalog-page {
+  width: 100%;
+}
+
+.catalog-page__header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+  .catalog-page__header {
+    margin-bottom: 24px;
+  }
+}

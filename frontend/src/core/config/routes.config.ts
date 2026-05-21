@@ -1,49 +1,33 @@
-export const routes = {
+export const ROUTES = {
+  // Главная
   home: '/',
-  catalog: '/catalog',
-
-  // Товары
-  bookshelf: '/bookshelf',
-  bookshelfDetail: (id: number) => `/bookshelf/${id}`,
-  bookshelfConfigurator: (id: number) => `/bookshelf/${id}/configurator`,
-
-  nightstand: '/nightstand',
-  nightstandDetail: (id: number) => `/nightstand/${id}`,
-  nightstandConfigurator: (id: number) => `/nightstand/${id}/configurator`,
-
-  dresser: '/dresser',
-  dresserDetail: (id: number) => `/dresser/${id}`,
-  dresserConfigurator: (id: number) => `/dresser/${id}/configurator`,
-
+  
+  // Каталог
+  catalog: {
+    base: '/catalog',
+    type: (type: string) => `/catalog/${type}`,
+    product: (id: string) => `/catalog/product/${id}`,
+  },
+  
+  // Конфигуратор
+  configurator: {
+    base: '/configurator',
+    type: (type: string) => `/configurator/${type}`,
+    product: (id: string) => `/configurator/product/${id}`,
+    materials: (id: string) => `/configurator/product/${id}/materials`,
+    summary: (id: string) => `/configurator/product/${id}/summary`,
+  },
+  
   // Корзина
-  cart: '/cart',
-  checkout: '/checkout',
-
-  // Страницы
-  about: '/about',
-  contacts: '/contacts',
-  notFound: '*',
+  cart: {
+    base: '/cart',
+    checkout: '/cart/checkout',
+  },
+  
+  // Авторизация
+  auth: {
+    login: '/login',
+    register: '/register',
+  },
 } as const;
 
-export const routeNames = {
-  home: 'Главная',
-  catalog: 'Каталог',
-  bookshelf: 'Книжные полки',
-  nightstand: 'Прикроватные тумбы',
-  dresser: 'Комоды',
-  cart: 'Корзина',
-  checkout: 'Оформление заказа',
-  about: 'О нас',
-  contacts: 'Контакты',
-} as const;
-
-export type RouteParams = {
-  bookshelfDetail: number;
-  bookshelfConfigurator: number;
-  nightstandDetail: number;
-  nightstandConfigurator: number;
-  dresserDetail: number;
-  dresserConfigurator: number;
-};
-
-export type Routes = typeof routes;

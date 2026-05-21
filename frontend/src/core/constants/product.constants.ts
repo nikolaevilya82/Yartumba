@@ -7,6 +7,20 @@ export const FurnitureType = {
 
 export type FurnitureType = (typeof FurnitureType)[keyof typeof FurnitureType];
 
+/**
+ * Список всех типов мебели (для итераций)
+ */
+export const FURNITURE_TYPES: FurnitureType[] = ['bookshelf', 'nightstand', 'dresser'];
+
+/**
+ * Иконки типов мебели
+ */
+export const FURNITURE_TYPE_ICONS: Record<FurnitureType, string> = {
+  bookshelf: '📚',
+  nightstand: '🛏️',
+  dresser: '🗄️',
+};
+
 // Названия типов товаров
 export const furnitureTypeNames: Record<FurnitureType, string> = {
   [FurnitureType.BOOKSHELF]: 'Книжная полка',
