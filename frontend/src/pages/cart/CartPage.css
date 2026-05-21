@@ -1,0 +1,10 @@
+.cart-page {
+  padding: 48px 0;
+}
+
+.cart-page__placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 600px;
+}
