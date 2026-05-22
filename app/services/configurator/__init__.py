@@ -8,6 +8,7 @@
 - material_options.py — получение списка материалов
 - constants.py — константы (размеры, проценты)
 - schemas.py — Pydantic схемы для конфигураций
+- bom_schemas.py — Pydantic схемы для BOM (Bill of Materials)
 """
 
 from app.services.configurator.configurator_service import (
@@ -30,6 +31,13 @@ from app.services.configurator.constants import (
     DRAWER_LIMITS,
     SHELF_LIMITS,
 )
+from app.services.configurator.bom_schemas import (
+    BOM,
+    Part,
+    SheetMaterialGroup,
+    EdgeMaterialGroup,
+    HardwareItem,
+)
 
 __all__ = [
     # Главный сервис
@@ -50,4 +58,10 @@ __all__ = [
     "DIMENSION_LIMITS",
     "DRAWER_LIMITS",
     "SHELF_LIMITS",
+    # BOM (Bill of Materials)
+    "BOM",
+    "Part",
+    "SheetMaterialGroup",
+    "EdgeMaterialGroup",
+    "HardwareItem",
 ]

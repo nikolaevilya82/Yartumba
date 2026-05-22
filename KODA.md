@@ -312,6 +312,138 @@ app/
 
 ---
 
+## Конфигуратор (рефакторинг 2025)
+
+### Архитектура
+
+Монолитный сервис `app/services/configurator_service.py` (200+ строк) был разбит на модули по принципу разделения ответственности (SOLID):
+
+```
+app/services/configurator/
+├── __init__.py                     # Экспорт главного сервиса
+├── configurator_service.py         # Главный сервис (оркестрация)
+├── validators.py                   # Валидация конфигураций
+├── material_options.py             # Получение списка материалов
+├── constants.py                    # Константы (размеры, проценты)
+├── schemas.py                      # Pydantic схемы для конфигураций
+└── calculators/
+    ├── __init__.py                 # Фабрика калькуляторов
+    ├── base_calculator.py          # Базовый класс для расчётов
+    ├── nightstand_calculator.py    # Расчёт тумбы
+    ├── bookshelf_calculator.py     # Расчёт полки
+    ├── dresser_calculator.py       # Расчёт комода
+    └── README.md                   # Документация по расчётам
+```
+
+### Принципы SOLID
+
+**SRP** — каждый класс отвечает за одну задачу:
+- `ConfiguratorService` — оркестрация (валидация + расчёт)
+- `NightstandValidator/BookshelfValidator/DresserValidator` — валидация
+- `NightstandCalculator/BookstandCalculator/DresserCalculator` — расчёт стоимости
+- `get_material_options` — получение материалов
+
+**OCP** — добавление нового типа мебели:
+1. Создать `new_furniture_calculator.py` наследуя `BaseCostCalculator`
+2. Создать `NewFurnitureValidator` наследуя `BaseValidator`
+3. Добавить в фабрики в `calculators/__init__.py` и `validators.py`
+
+**LSP** — все калькуляторы и валидаторы заменяемы через базовые классы.
+
+**ISP** — минимальные интерфейсы:
+- `BaseCostCalculator` — только методы расчёта
+- `BaseValidator` — только метод валидации
+
+**DIP** — инъекция зависимости через `db: Session`, фабрики создают объекты динамически.
+
+### Использование
+
+**Новый API:**
+```python
+from app.services.configurator import create_configurator_service
+from sqlalchemy.orm import Session
+
+# Создание сервиса
+db: Session = SessionLocal()
+service = create_configurator_service(db)
+
+# Валидация
+result = service.validate("nightstand", config)
+if not result["valid"]:
+    print("Errors:", result["errors"])
+
+# Расчёт стоимости
+cost = service.calculate("nightstand", config)
+print(f"Total: {cost['total_price']} руб.")
+print(f"Materials: {cost['materials_cost']} руб.")
+print(f"Hardware: {cost['hardware_cost']} руб.")
+print(f"Work: {cost['work_cost']} руб.")
+
+# Получение материалов
+options = service.get_material_options()
+sheet_materials = options["sheet_materials"]
+```
+
+**Фабрики:**
+```python
+# Валидатор
+from app.services.configurator.validators import get_validator
+
+validator = get_validator("nightstand")
+result = validator.validate(config)
+
+# Калькулятор
+from app.services.configurator.calculators import get_calculator
+
+calculator = get_calculator("bookshelf", db)
+cost = calculator.calculate(config)
+```
+
+**Константы:**
+```python
+from app.services.configurator.constants import DIMENSION_LIMITS, WORK_COST_MULTIPLIER
+
+limits = DIMENSION_LIMITS["nightstand"]
+print(f"Width: {limits['width']['min']} - {limits['width']['max']} мм")
+```
+
+**Pydantic схемы:**
+```python
+from app.services.configurator.schemas import NightstandConfig, CostBreakdown
+
+config = NightstandConfig(width=500, height=500, depth=400)
+cost = CostBreakdown(**cost_dict)
+```
+
+**BOM (Bill of Materials):**
+```python
+from app.services.configurator import BOM, Part, HardwareItem
+
+# Получение BOM из результата расчёта
+result = service.calculate("nightstand", config)
+bom = result["bom"]
+
+# Или для комода
+result = service.calculate("dresser", config)
+bom = result["bom"]
+
+# Или для книжной полки
+result = service.calculate("bookshelf", config)
+bom = result["bom"]
+
+# Экспорт в JSON для производства
+json_output = bom.to_production_json()
+
+# Структура BOM:
+# - sheet_materials: детали с размерами и кромкой
+# - edge_materials: список отрезков кромки по длинам
+# - hardware: фурнитура с ценами
+# - total_sheet_area_m2: общая площадь материалов
+# - estimated_sheets: количество листов для раскроя
+```
+
+---
+
 ## Тестирование
 
 ### Бэкенд
