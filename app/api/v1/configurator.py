@@ -93,12 +93,15 @@ async def calculate_configuration(data: ConfigurationCalculate):
     """
     Расчёт стоимости конфигурации
     
+    Материал рассчитывается по объёму изделия (габаритные размеры).
+    BOM (спецификация деталей) формируется отдельно при оформлении заказа.
+
     Возвращает:
     - materials_cost: Стоимость материалов
     - hardware_cost: Стоимость фурнитуры
     - work_cost: Стоимость работы
     - total_price: Итоговая цена
-    - details: Детализация расчёта
+    - details: Детализация расчёта (объём, количество фурнитуры)
     """
     furniture_type = data.furniture_type
     config = data.configuration
@@ -107,12 +110,12 @@ async def calculate_configuration(data: ConfigurationCalculate):
     try:
         service = create_configurator_service(db)
         
-        if furniture_type == "nightstand":
-            result = service.calculate("nightstand", config)
+        if furniture_type in ("nightstand", "bookshelf", "dresser"):
+            result = service.calculate(furniture_type, config)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Расчёт для типа '{furniture_type}' ещё не реализован"
+                detail=f"Расчёт для типа '{furniture_type}' не поддерживается"
             )
         
         return result
