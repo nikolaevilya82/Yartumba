@@ -206,7 +206,59 @@ class FurnitureCostCalculator:
         return total_edge, details
 
     # =========================================================================
-    # Расчёт стоимости материалов
+    # Объёмный расчёт стоимости материалов (новый подход)
+    # =========================================================================
+
+    def calculate_volume_material_cost(
+        self,
+        width: int,
+        height: int,
+        depth: int,
+        material_id: Optional[UUID]
+    ) -> Decimal:
+        """
+        Рассчитать стоимость материала исходя из объёма изделия
+
+        Формула: объём_изделия_м³ × цена_материала_за_м³
+        Цена за м³ = price_листа / (площадь_листа_м² × толщина_м)
+
+        Args:
+            width: Ширина изделия (мм)
+            height: Высота изделия (мм)
+            depth: Глубина изделия (мм)
+            material_id: ID листового материала
+
+        Returns:
+            Стоимость в копейках
+        """
+        if not material_id:
+            return Decimal("0")
+
+        material = self.get_sheet_material(material_id)
+        if not material:
+            return Decimal("0")
+
+        # Объём изделия в м³
+        volume_m3 = (width * height * depth) / 1_000_000_000
+
+        # Площадь стандартного листа в м²
+        sheet_area_m2 = (material.standard_width * material.standard_height) / 1_000_000
+
+        # Толщина в метрах
+        thickness_m = material.thickness / 1000
+
+        # Объём листа в м³
+        sheet_volume_m3 = sheet_area_m2 * thickness_m
+        if sheet_volume_m3 <= 0:
+            return Decimal("0")
+
+        # Цена за м³
+        price_per_m3 = Decimal(material.price) / Decimal(str(sheet_volume_m3))
+
+        return Decimal(str(volume_m3)) * price_per_m3
+
+    # =========================================================================
+    # Расчёт стоимости материалов (по площади — для BOM и обратной совместимости)
     # =========================================================================
 
     def calculate_sheet_cost(
@@ -360,7 +412,6 @@ class FurnitureCostCalculator:
         work_cost: Decimal,
         total_cost: Decimal,
         details: Dict[str, Any],
-        bom: Optional[BOM] = None,
     ) -> Dict[str, Any]:
         """
         Сформировать результат расчёта
@@ -371,23 +422,17 @@ class FurnitureCostCalculator:
             work_cost: Стоимость работы
             total_cost: Итоговая стоимость
             details: Детализация расчёта
-            bom: Список материалов для производства (опционально)
-            
+
         Returns:
             Словарь с результатами
         """
-        result = {
+        return {
             "materials_cost": int(materials_cost),
             "hardware_cost": int(hardware_cost),
             "work_cost": int(work_cost),
             "total_price": int(total_cost),
             "details": details,
         }
-
-        if bom:
-            result["bom"] = bom.to_dict()
-        
-        return result
 
     # =========================================================================
     # Генерация списка деталей (BOM)

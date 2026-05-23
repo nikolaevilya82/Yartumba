@@ -416,20 +416,23 @@ cost = CostBreakdown(**cost_dict)
 ```
 
 **BOM (Bill of Materials):**
+
+BOM формируется отдельно при оформлении и оплате заказа, а не на этапе расчёта стоимости.
+
 ```python
 from app.services.configurator import BOM, Part, HardwareItem
+from app.services.configurator.calculators.furniture_calculator import FurnitureCostCalculator
 
-# Получение BOM из результата расчёта
-result = service.calculate("nightstand", config)
-bom = result["bom"]
-
-# Или для комода
-result = service.calculate("dresser", config)
-bom = result["bom"]
-
-# Или для книжной полки
-result = service.calculate("bookshelf", config)
-bom = result["bom"]
+# Получение BOM через калькулятор (после оплаты заказа)
+calculator = get_calculator("nightstand", db)
+parts = calculator.generate_parts_list(width=500, height=600, depth=400, ...)
+edges = calculator.generate_edge_list(parts)
+bom = calculator.generate_bom(
+    furniture_type="nightstand",
+    parts=parts,
+    edges=edges,
+    hardware_items=[...]
+)
 
 # Экспорт в JSON для производства
 json_output = bom.to_production_json()

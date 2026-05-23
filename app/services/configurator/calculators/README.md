@@ -6,49 +6,29 @@
 
 Содержит общую логику расчёта стоимости для всех типов изделий (тумбы, полки, комоды). Устраняет дублирование кода между калькуляторами.
 
+## Принцип расчёта
+
+**Материал** считается по объёму изделия (габаритные размеры):
+```
+объём_м³ = (ширина × высота × глубина) / 1_000_000_000
+цена_за_м³ = price_листа / (площадь_листа_м² × толщина_м)
+materials_cost = объём_м³ × цена_за_м³
+```
+
+**BOM** (спецификация деталей) формируется отдельно при оформлении заказа.
+
 ## Класс `FurnitureCostCalculator`
-
-### Методы расчёта площади
-
-```python
-# Расчёт площади листового материала для корпуса
-total_area, details = calculator.calculate_body_area(
-    width=500,           # Ширина (мм)
-    height=600,          # Высота (мм)
-    depth=400,           # Глубина (мм)
-    shelf_count=2,       # Количество внутренних полок
-    facade_count=3,      # Количество фасадов
-    has_back_panel=True, # Есть ли задняя стенка
-    thickness=16         # Толщина материала (мм)
-)
-# total_area - площадь в м²
-# details - детализация по деталям (боковины, полки, фасады и т.д.)
-```
-
-### Методы расчёта кромки
-
-```python
-# Расчёт длины кромки (мм)
-total_edge, details = calculator.calculate_edge_length(
-    width=500,
-    height=600,
-    depth=400,
-    shelf_count=2,
-    facade_count=3,
-    has_back_panel=True
-)
-# total_edge - общая длина в мм
-# details - детализация по элементам
-```
 
 ### Методы расчёта стоимости
 
 ```python
-# Листовой материал (цена за м²)
-sheet_cost = calculator.calculate_sheet_cost(area_m2=1.5, material_id=uuid)
-
-# Кромка (цена за метр)
-edge_cost = calculator.calculate_edge_cost(length_mm=5000, material_id=uuid)
+# Материал по объёму изделия (новый подход)
+materials_cost = calculator.calculate_volume_material_cost(
+    width=500,
+    height=600,
+    depth=400,
+    material_id=uuid
+)
 
 # Петли (цена за штуку)
 hinge_cost = calculator.calculate_hinge_cost(count=4, hinge_id=uuid)
@@ -80,7 +60,7 @@ result = calculator.format_result(
     hardware_cost=2000,
     work_cost=2100,
     total_cost=9100,
-    details={"sheet_material_area_m2": 1.5}
+    details={"volume_m3": 0.12}
 )
 ```
 

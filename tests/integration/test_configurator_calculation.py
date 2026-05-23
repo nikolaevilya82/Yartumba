@@ -68,7 +68,7 @@ class TestNightstandCostCalculation:
         result = service.calculate("nightstand", config)
         
         assert "details" in result
-        assert "sheet_material_area_m2" in result["details"]
+        assert "volume_m3" in result["details"]
         assert "hinges_count" in result["details"]
         assert "slides_count" in result["details"]
 
