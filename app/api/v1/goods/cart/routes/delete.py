@@ -11,7 +11,7 @@ from app.api.v1.goods.cart.schemas import CartSummary, RemoveFromCartResponse
 from app.models.cart import Cart
 from app.services.cart_service import CartService
 
-router = APIRouter(prefix="/cart", tags=["Cart"])
+router = APIRouter(tags=["Cart"])
 
 
 @router.delete("/items/{item_id}", summary="Удалить товар из корзины")
@@ -43,12 +43,12 @@ async def remove_item_from_cart(
             item_id=item_id,
         )
         
-        items_count = sum(item.quantity for item in updated_cart.items)
-        subtotal = sum(item.total_price for item in updated_cart.items)
+        total_items = sum(item.quantity for item in updated_cart.items)
+        total_price = sum(item.total_price for item in updated_cart.items)
         
         cart_summary = CartSummary(
-            items_count=items_count,
-            subtotal=subtotal,
+            total_items=total_items,
+            total_price=total_price,
         )
         
         return RemoveFromCartResponse(

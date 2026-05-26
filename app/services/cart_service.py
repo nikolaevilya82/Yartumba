@@ -123,42 +123,37 @@ class CartService:
         Добавить товар в корзину
         
         1. Проверить существование товара (furniture_type + furniture_id)
-        2. Получить актуальную цену товара
+        2. Получить product_id и актуальную цену товара
         3. Если товар уже в корзине → увеличить quantity
         4. Иначе → создать новый CartItem
         5. Вернуть обновленную корзину
-        
-        Args:
-            db: Database session
-            cart_id: ID корзины
-            item_data: Данные для создания позиции
-            configuration: Конфигурация товара (JSON)
-            
-        Returns:
-            Cart: Обновлённая корзина
-            
-        Raises:
-            ValueError: Если товар не найден
         """
         # 1. Проверить существование корзины
         cart = db.query(Cart).filter(Cart.id == cart_id).first()
         if not cart:
             raise ValueError(f"Корзина {cart_id} не найдена")
         
-        # 2. Проверить существование товара
-        self._validate_furniture_exists(
-            db,
-            item_data.furniture_type,
-            item_data.furniture_id
-        )
+        # 2. Проверить существование товара и получить product_id
+        furniture = self._get_furniture(db, item_data.furniture_type, item_data.furniture_id)
+        if not furniture:
+            raise ValueError(
+                f"Товар {item_data.furniture_type} {item_data.furniture_id} не найден"
+            )
+        
+        if not furniture.product_id:
+            raise ValueError(
+                f"Товар {item_data.furniture_type} не привязан к каталогу (product_id отсутствует)"
+            )
+        
+        product_id = str(furniture.product_id)
         
         # 3. Получить актуальную цену
-        unit_price = self._get_furniture_price(
-            db,
-            item_data.furniture_type,
-            item_data.furniture_id,
-            item_data.configuration_id
-        )
+        unit_price = self._get_furniture_price(db, furniture)
+        
+        # Определяем конфигурацию для сохранения
+        item_configuration = item_data.configuration if item_data.configuration is not None else configuration
+        if item_configuration is None:
+            item_configuration = {}
         
         # 4. Ищем существующий товар в корзине
         existing_item = db.query(CartItem).filter(
@@ -173,18 +168,21 @@ class CartService:
             existing_item.quantity += item_data.quantity
             existing_item.unit_price = unit_price
             existing_item.total_price = unit_price * existing_item.quantity
-            existing_item.saved_configuration_snapshot = configuration
+            existing_item.configuration = item_configuration
+            existing_item.materials_snapshot = configuration
         else:
             # 6. Создаём новый CartItem
             cart_item = CartItem(
                 cart_id=cart_id,
+                product_id=product_id,
                 furniture_type=item_data.furniture_type,
                 furniture_id=item_data.furniture_id,
                 configuration_id=item_data.configuration_id,
                 quantity=item_data.quantity,
                 unit_price=unit_price,
                 total_price=unit_price * item_data.quantity,
-                saved_configuration_snapshot=configuration
+                configuration=item_configuration,
+                materials_snapshot=configuration
             )
             db.add(cart_item)
         
@@ -415,44 +413,49 @@ class CartService:
     # Вспомогательные методы
     # =========================================================================
 
-    def _get_furniture_price(
+    def _get_furniture(
         self,
         db: Session,
         furniture_type: str,
-        furniture_id: str,
-        configuration_id: Optional[str] = None
+        furniture_id: str
+    ):
+        """
+        Получить объект мебели по типу и ID
+        
+        Args:
+            db: Database session
+            furniture_type: Тип мебели
+            furniture_id: ID мебели
+            
+        Returns:
+            Bookshelf | Nightstand | Dresser | None
+        """
+        if furniture_type == "bookshelf":
+            return db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
+        elif furniture_type == "nightstand":
+            return db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
+        elif furniture_type == "dresser":
+            return db.query(Dresser).filter(Dresser.id == furniture_id).first()
+        return None
+
+    def _get_furniture_price(
+        self,
+        db: Session,
+        furniture
     ) -> Decimal:
         """
         Получить актуальную цену товара
         
         Args:
             db: Database session
-            furniture_type: Тип мебели
-            furniture_id: ID мебели
-            configuration_id: ID конфигурации (опционально)
+            furniture: Объект мебели
             
         Returns:
             Decimal: Цена товара
-            
-        Raises:
-            ValueError: Если товар не найден
         """
-        # Получаем объект мебели и его цену
-        if furniture_type == "bookshelf":
-            furniture = db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
-        elif furniture_type == "nightstand":
-            furniture = db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
-        elif furniture_type == "dresser":
-            furniture = db.query(Dresser).filter(Dresser.id == furniture_id).first()
-        else:
-            raise ValueError(f"Неверный тип мебели: {furniture_type}")
-        
-        if not furniture:
-            raise ValueError(f"Товар {furniture_type} {furniture_id} не найден")
-        
-        # TODO: Здесь будет логика расчёта цены с учётом конфигурации
-        # Пока возвращаем базовую цену
-        return Decimal(str(furniture.base_price)) if hasattr(furniture, 'base_price') else Decimal("0.00")
+        if furniture and furniture.product and furniture.product.base_price:
+            return Decimal(str(furniture.product.base_price))
+        return Decimal("0.00")
 
     def _validate_furniture_exists(
         self,
@@ -471,14 +474,6 @@ class CartService:
         Raises:
             ValueError: Если товар не найден
         """
-        if furniture_type == "bookshelf":
-            furniture = db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
-        elif furniture_type == "nightstand":
-            furniture = db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
-        elif furniture_type == "dresser":
-            furniture = db.query(Dresser).filter(Dresser.id == furniture_id).first()
-        else:
-            raise ValueError(f"Неверный тип мебели: {furniture_type}")
-        
+        furniture = self._get_furniture(db, furniture_type, furniture_id)
         if not furniture:
             raise ValueError(f"Товар {furniture_type} {furniture_id} не найден")

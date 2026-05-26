@@ -30,7 +30,7 @@ class CartActions {
   }
 
   // Обновить количество
-  async updateQuantity(itemId: number, quantity: number) {
+  async updateQuantity(itemId: string, quantity: number) {
     try {
       const response = await cartService.updateCartItem(itemId, { quantity });
       runInAction(() => {
@@ -44,7 +44,7 @@ class CartActions {
   }
 
   // Увеличить количество
-  async increment(itemId: number) {
+  async increment(itemId: string) {
     try {
       const response = await cartService.incrementCartItem(itemId);
       runInAction(() => {
@@ -58,7 +58,7 @@ class CartActions {
   }
 
   // Уменьшить количество
-  async decrement(itemId: number) {
+  async decrement(itemId: string) {
     try {
       const response = await cartService.decrementCartItem(itemId);
       runInAction(() => {
@@ -72,7 +72,7 @@ class CartActions {
   }
 
   // Удалить товар
-  async removeItem(itemId: number) {
+  async removeItem(itemId: string) {
     try {
       const response = await cartService.removeFromCart(itemId);
       runInAction(() => {

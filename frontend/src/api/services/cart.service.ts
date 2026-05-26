@@ -38,7 +38,7 @@ export async function addItemToCart(
 
 // Обновить количество товара в корзине
 export async function updateCartItem(
-  itemId: number,
+  itemId: string,
   payload: UpdateCartItemPayload
 ): Promise<ApiResponse<CartOperationResult>> {
   return apiClient.patch<ApiResponse<CartOperationResult>>(
@@ -48,7 +48,7 @@ export async function updateCartItem(
 }
 
 // Увеличить количество товара
-export async function incrementCartItem(itemId: number): Promise<ApiResponse<CartOperationResult>> {
+export async function incrementCartItem(itemId: string): Promise<ApiResponse<CartOperationResult>> {
   const cart = await getCart();
   const item = cart.data.items.find(i => i.id === itemId);
   if (!item) {
@@ -58,7 +58,7 @@ export async function incrementCartItem(itemId: number): Promise<ApiResponse<Car
 }
 
 // Уменьшить количество товара
-export async function decrementCartItem(itemId: number): Promise<ApiResponse<CartOperationResult>> {
+export async function decrementCartItem(itemId: string): Promise<ApiResponse<CartOperationResult>> {
   const cart = await getCart();
   const item = cart.data.items.find(i => i.id === itemId);
   if (!item) {
@@ -71,8 +71,23 @@ export async function decrementCartItem(itemId: number): Promise<ApiResponse<Car
 }
 
 // Удалить товар из корзины
-export async function removeFromCart(itemId: number): Promise<ApiResponse<CartOperationResult>> {
+export async function removeFromCart(itemId: string): Promise<ApiResponse<CartOperationResult>> {
   return apiClient.delete<ApiResponse<CartOperationResult>>(cartEndpoints.cartItem(itemId));
+}
+
+// Хелпер: проверить, есть ли товар в корзине
+export async function isItemInCart(
+  furnitureType: FurnitureType,
+  furnitureId: string
+): Promise<boolean> {
+  try {
+    const response = await getCart();
+    return response.data.items.some(
+      item => item.furniture_type === furnitureType && item.furniture_id === furnitureId
+    );
+  } catch {
+    return false;
+  }
 }
 
 // Очистить корзину
@@ -112,21 +127,6 @@ export async function getCartTotal(): Promise<number> {
     return response.data.total_price;
   } catch {
     return 0;
-  }
-}
-
-// Хелпер: проверить, есть ли товар в корзине
-export async function isItemInCart(
-  furnitureType: FurnitureType,
-  furnitureId: number
-): Promise<boolean> {
-  try {
-    const response = await getCart();
-    return response.data.items.some(
-      item => item.furniture_type === furnitureType && item.furniture_id === furnitureId
-    );
-  } catch {
-    return false;
   }
 }
 

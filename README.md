@@ -273,11 +273,12 @@ MIT License — подробности в файле `LICENSE`
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | 🟡 В разработке |
-| Корзина | 🟡 Модель готова |
+| Корзина | ✅ API + Frontend готово |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (каталог) | ✅ Готово |
 | Фронтенд (конфигуратор) | 🟡 Заглушка |
+| Фронтенд (корзина) | ✅ Готово (MobX + API) |
 | Тесты бэкенда | ✅ 176 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 
@@ -294,7 +295,7 @@ MIT License — подробности в файле `LICENSE`
 | `id` | UUID | Уникальный ID позиции |
 | `cart_id` | UUID | Ссылка на корзину |
 | `product_id` | UUID | FK на products (каталог) |
-| `product_type` | String | bookshelf, nightstand, dresser |
+| `furniture_type` | String | bookshelf, nightstand, dresser |
 | `furniture_id` | UUID | ID конкретной мебели |
 | `configuration` | JSONB | Конфигурация товара |
 | `quantity` | Integer | Количество |
@@ -368,8 +369,8 @@ new_price = cart_item.recalculate_price(db)
 | `CartSummary` | Краткое резюме |
 
 **Вычисляемые поля:**
-- `CartResponse.items_count` — общее количество товаров
-- `CartResponse.subtotal` — итоговая сумма
+- `CartResponse.total_items` — общее количество товаров
+- `CartResponse.total_price` — итоговая сумма
 - `CartItemResponse.item_total` — сумма позиции (quantity × unit_price)
 
 **Валидация:**
@@ -400,6 +401,7 @@ new_price = cart_item.recalculate_price(db)
 
 | Зависимость | Описание |
 |-------------|----------|
+| `get_optional_session_id` | Получить session_id из query/header/cookie или сгенерировать новый |
 | `get_cart` | Получить/создать объект корзины |
 | `get_cart_id` | Получить ID корзины (через get_cart, DRY) |
 | `get_cart_item_by_id` | Получить товар из корзины с валидацией |
@@ -409,11 +411,11 @@ new_price = cart_item.recalculate_price(db)
 
 | Файл | Методы | Путь |
 |------|--------|------|
-| `routes/get.py` | `GET` | `/cart` |
-| `routes/post.py` | `POST` | `/cart/items` |
-| `routes/patch.py` | `PATCH` | `/cart/items/{item_id}` |
-| `routes/delete.py` | `DELETE` | `/cart/items/{item_id}`, `/cart` |
-| `routes/merge.py` | `POST` | `/cart/merge` |
+| `routes/get.py` | `GET` | `/goods/cart` |
+| `routes/post.py` | `POST` | `/goods/cart/items` |
+| `routes/patch.py` | `PATCH` | `/goods/cart/items/{item_id}` |
+| `routes/delete.py` | `DELETE` | `/goods/cart/items/{item_id}`, `/goods/cart` |
+| `routes/merge.py` | `POST` | `/goods/cart/merge` |
 
 ---
 

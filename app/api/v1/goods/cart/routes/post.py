@@ -17,7 +17,7 @@ from app.api.v1.goods.cart.schemas import (
 from app.models.cart import Cart
 from app.services.cart_service import CartService
 
-router = APIRouter(prefix="/cart", tags=["Cart"])
+router = APIRouter(tags=["Cart"])
 
 
 @router.post("/items", response_model=AddToCartResponse, status_code=status.HTTP_201_CREATED, summary="Добавить товар в корзину")
@@ -50,6 +50,7 @@ async def add_item_to_cart(
             furniture_id=request.furniture_id,
             configuration_id=None,  # TODO: получить из конфигурации
             quantity=request.quantity,
+            configuration=request.configuration,
         )
         
         updated_cart = cart_service.add_item(
@@ -81,26 +82,26 @@ async def add_item_to_cart(
             configuration_id=str(cart_item.configuration_id) if cart_item.configuration_id else None,
             quantity=cart_item.quantity,
             unit_price=cart_item.unit_price,
-            saved_configuration_snapshot=cart_item.saved_configuration_snapshot,
+            configuration=cart_item.configuration,
             item_total=cart_item.total_price,
-            furniture_name=None,
+            furniture_name=cart_item.product.name if cart_item.product else None,
             created_at=cart_item.created_at,
             updated_at=cart_item.updated_at,
         )
         
-        items_count = sum(item.quantity for item in updated_cart.items)
-        subtotal = sum(item.total_price for item in updated_cart.items)
+        total_items = sum(item.quantity for item in updated_cart.items)
+        total_price = sum(item.total_price for item in updated_cart.items)
         
         cart_summary = CartSummary(
-            items_count=items_count,
-            subtotal=subtotal,
+            total_items=total_items,
+            total_price=total_price,
         )
         
         return AddToCartResponse(
             cart_item=cart_item_response,
             cart_summary=cart_summary,
         )
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

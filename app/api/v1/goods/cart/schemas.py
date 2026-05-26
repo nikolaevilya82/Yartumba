@@ -38,8 +38,8 @@ class CartResponse(BaseModel):
     items: List["CartItemResponse"] = Field(default_factory=list, description="Элементы корзины")
     
     # Вычисляемые поля
-    items_count: int = Field(..., description="Общее количество товаров")
-    subtotal: Decimal = Field(..., description="Итоговая сумма (без скидок)")
+    total_items: int = Field(..., description="Общее количество товаров")
+    total_price: Decimal = Field(..., description="Итоговая сумма (без скидок)")
     created_at: datetime = Field(..., description="Дата создания")
     updated_at: datetime = Field(..., description="Дата обновления")
     
@@ -58,9 +58,9 @@ class CartItemBase(BaseModel):
     configuration_id: Optional[str] = Field(None, description="ID конфигурации из каталога")
     quantity: int = Field(..., ge=1, le=99, description="Количество")
     unit_price: Decimal = Field(..., ge=0, description="Цена за единицу")
-    saved_configuration_snapshot: Optional[Dict[str, Any]] = Field(
+    configuration: Optional[Dict[str, Any]] = Field(
         None, 
-        description="Снепшот конфигурации на момент добавления"
+        description="Конфигурация товара (размеры, материалы)"
     )
 
 
@@ -70,6 +70,10 @@ class CartItemCreate(BaseModel):
     furniture_id: str = Field(..., description="ID конкретной мебели")
     configuration_id: Optional[str] = Field(None, description="ID конфигурации из каталога")
     quantity: int = Field(1, ge=1, le=99, description="Количество")
+    configuration: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Конфигурация товара (размеры, материалы)"
+    )
     
     @field_validator('furniture_type')
     @classmethod
@@ -97,7 +101,7 @@ class CartItemResponse(BaseModel):
     configuration_id: Optional[str] = Field(None, description="ID конфигурации")
     quantity: int = Field(..., description="Количество")
     unit_price: Decimal = Field(..., description="Цена за единицу")
-    saved_configuration_snapshot: Optional[Dict[str, Any]] = Field(None, description="Снепшот конфигурации")
+    configuration: Optional[Dict[str, Any]] = Field(None, description="Конфигурация товара")
     
     # Вычисляемые поля
     item_total: Decimal = Field(..., description="Сумма позиции (quantity * unit_price)")
@@ -115,8 +119,8 @@ class CartItemResponse(BaseModel):
 
 class CartSummary(BaseModel):
     """Схема резюме корзины - краткая информация для UI"""
-    items_count: int = Field(..., description="Количество товаров")
-    subtotal: Decimal = Field(..., description="Подытог")
+    total_items: int = Field(..., description="Количество товаров")
+    total_price: Decimal = Field(..., description="Подытог")
     
     class Config:
         from_attributes = True

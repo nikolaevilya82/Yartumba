@@ -3,14 +3,32 @@ import type { FurnitureConfiguration } from './configurator.types';
 
 // Элемент корзины
 export interface CartItem {
-  id: number;
+  id: string;
   furniture_type: FurnitureType;
-  furniture_id?: number;
+  furniture_id: string;
   configuration: CartItemConfiguration;
   quantity: number;
   unit_price: number;
   total_price: number;
   created_at: string;
+}
+
+// Корзина
+export interface Cart {
+  id: string;
+  items: CartItem[];
+  total_items: number;
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Данные для добавления в корзину
+export interface AddToCartPayload {
+  furniture_type: FurnitureType;
+  furniture_id: string;
+  configuration: FurnitureConfiguration;
+  quantity: number;
 }
 
 // Конфигурация товара в корзине
