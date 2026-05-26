@@ -132,14 +132,14 @@ app/
 │           │   ├── routes.py
 │           │   └── schemas.py
 │           └── cart/
-│               ├── dependencies.py    # Зависимости корзины (get_cart, get_cart_id)
+│               ├── dependencies.py    # Зависимости корзины (get_optional_session_id, get_cart, get_cart_id)
 │               ├── routes/            # Эндпоинты по HTTP методам (SRP)
 │               │   ├── __init__.py
-│               │   ├── get.py         # GET /cart
-│               │   ├── post.py        # POST /cart/items
-│               │   ├── patch.py       # PATCH /cart/items/{item_id}
-│               │   ├── delete.py      # DELETE /cart/items/{item_id}, DELETE /cart
-│               │   └── merge.py       # POST /cart/merge
+│               │   ├── get.py         # GET /goods/cart
+│               │   ├── post.py        # POST /goods/cart/items
+│               │   ├── patch.py       # PATCH /goods/cart/items/{item_id}
+│               │   ├── delete.py      # DELETE /goods/cart/items/{item_id}, DELETE /goods/cart
+│               │   └── merge.py       # POST /goods/cart/merge
 │               └── schemas.py         # Pydantic схемы корзины
 ├── services/             # Бизнес-логика
 │   ├── configurator/         # Конфигуратор (рефакторинг 2025)
@@ -225,6 +225,17 @@ app/
 | `GET` | `/v1/configurator/options` | Получить все материалы и фурнитуру |
 | `POST` | `/v1/configurator/validate` | Валидация конфигурации |
 | `POST` | `/v1/configurator/calculate` | Расчёт стоимости (nightstand) |
+
+### Cart (корзина)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET` | `/v1/goods/cart` | Получить корзину |
+| `POST` | `/v1/goods/cart/items` | Добавить товар в корзину |
+| `PATCH` | `/v1/goods/cart/items/{item_id}` | Обновить количество товара |
+| `DELETE` | `/v1/goods/cart/items/{item_id}` | Удалить товар из корзины |
+| `DELETE` | `/v1/goods/cart` | Очистить корзину |
+| `POST` | `/v1/goods/cart/merge` | Объединить корзины (session → user) |
 
 ---
 
@@ -616,11 +627,12 @@ frontend/src/
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | ✅ Готово |
-| Корзина | 🟡 Модель готова |
+| Корзина | ✅ API + Frontend готово |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (каталог) | ✅ Готово |
 | Фронтенд (конфигуратор) | 🟡 Заглушка |
+| Фронтенд (корзина) | ✅ Готово (MobX + API) |
 | Тесты бэкенда | ✅ 176 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 

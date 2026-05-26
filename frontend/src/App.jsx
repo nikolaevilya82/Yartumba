@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
 import { CatalogProvider } from './stores/catalog';
+import { cartStore } from './stores/cart/cart.store';
 import AppRoutes from './routes/AppRoutes';
 import { ROUTES } from './core/config/routes.config';
 import './core/styles/global.css';
 
-const Header = () => {
+const Header = observer(() => {
+  useEffect(() => {
+    cartStore.fetch();
+  }, []);
+
+  const cartCount = cartStore.totalItems;
+
   return (
     <header className="header">
       <div className="container">
@@ -24,13 +32,15 @@ const Header = () => {
           <Link to={ROUTES.cart.base} className="nav-link cart-badge">
             <span className="nav-link__icon">🛒</span>
             Корзина
-            <span className="cart-badge__count">0</span>
+            {cartCount > 0 && (
+              <span className="cart-badge__count">{cartCount}</span>
+            )}
           </Link>
         </nav>
       </div>
     </header>
   );
-};
+});
 
 const Footer = () => {
   return (

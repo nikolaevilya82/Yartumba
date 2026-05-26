@@ -2,8 +2,9 @@
 Зависимости для корзины
 SRP: Только получение корзины из авторизации или сессии
 """
+import uuid
 from typing import Optional, Annotated
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from pydantic import UUID4
 from sqlalchemy.orm import Session
 
@@ -20,37 +21,40 @@ def get_optional_user_id() -> Optional[str]:
     """
     Получить user_id из токена авторизации (опционально).
     
-    SRP: Только извлечение user_id из auth токена.
-    
     TODO: Реализовать после внедрения авторизации.
     Сейчас возвращает None (гостевой режим).
-    
-    Returns:
-        Optional[str]: user_id или None
     """
     # TODO: Добавить проверку JWT токена
-    # from app.core.security import get_current_user
-    # user = get_current_user(token)
-    # return str(user.id) if user else None
     return None
 
 
-def get_optional_session_id() -> Optional[str]:
+def get_optional_session_id(request: Request) -> Optional[str]:
     """
-    Получить session_id из cookies или запроса (опционально).
+    Получить session_id из query-параметра, заголовка или cookies.
     
-    SRP: Только извлечение session_id из сессии.
-    
-    TODO: Реализовать получение из cookies.
-    Сейчас возвращает None (требует явной передачи).
+    Приоритет:
+    1. Query-параметр ?session_id=...
+    2. Заголовок X-Session-ID
+    3. Cookie session_id
     
     Returns:
         Optional[str]: session_id или None
     """
-    # TODO: Добавить получение из cookies
-    # from fastapi import Request
-    # request: Request = ...
-    # return request.cookies.get("session_id")
+    # 1. Query param
+    session_id = request.query_params.get("session_id")
+    if session_id:
+        return session_id
+    
+    # 2. Header
+    session_id = request.headers.get("X-Session-ID")
+    if session_id:
+        return session_id
+    
+    # 3. Cookie
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        return session_id
+    
     return None
 
 
@@ -62,65 +66,52 @@ def get_optional_session_id() -> Optional[str]:
 def get_cart_identifier(
     user_id: Optional[str] = Depends(get_optional_user_id),
     session_id: Optional[str] = Depends(get_optional_session_id),
-) -> tuple[Optional[str], bool]:
+) -> tuple[Optional[str], Optional[str], bool]:
     """
-    Получить идентификатор корзины и флаг авторизации.
+    Получить идентификатор корзины, session_id и флаг авторизации.
     
     Логика:
     1. Если есть user_id → корзина пользователя
     2. Если есть session_id → гостевая корзина
-    3. Иначе → ошибка (требуется хотя бы один)
+    3. Иначе → генерируем новый session_id (первый визит)
     
-    SRP: Только определение идентификатора для корзины.
-    
-    Args:
-        user_id: ID авторизованного пользователя (может быть None)
-        session_id: ID сессии гостя (может быть None)
-        
     Returns:
-        tuple[Optional[str], bool]: (identifier, is_user_authenticated)
-            - identifier: user_id или session_id (never None после проверки)
+        tuple[Optional[str], Optional[str], bool]:
+            - identifier: user_id или session_id (never None)
+            - session_id: текущий или сгенерированный session_id
             - is_user_authenticated: True если пользователь авторизован
-        
-    Raises:
-        HTTPException: 400 если нет ни user_id ни session_id
     """
-    if not user_id and not session_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Требуется авторизация (user_id) или session_id"
-        )
+    if user_id:
+        return user_id, None, True
     
-    # Приоритет: user_id > session_id
-    identifier: Optional[str] = user_id if user_id else session_id
-    is_authenticated = bool(user_id)
+    if not session_id:
+        # Генерируем новый session_id для первого визита
+        session_id = str(uuid.uuid4())
     
-    return identifier, is_authenticated
+    return session_id, session_id, False
 
 
 def get_cart(
-    identifier: Annotated[tuple[Optional[str], bool], Depends(get_cart_identifier)],
+    identifier: Annotated[tuple[Optional[str], Optional[str], bool], Depends(get_cart_identifier)],
     db: Session = Depends(get_db),
 ) -> Cart:
     """
     Получить или создать корзину по идентификатору.
     
-    SRP: Только получение/создание объекта корзины.
-    
     Args:
-        identifier: (user_id_or_session_id, is_authenticated)
+        identifier: (identifier, session_id, is_authenticated)
         db: Database session
         
     Returns:
         Cart: Объект корзины
     """
-    user_id, is_authenticated = identifier
+    user_id_or_session, session_id, is_authenticated = identifier
     
     cart_service = CartService()
     cart = cart_service.get_or_create_cart(
         db=db,
-        user_id=user_id if is_authenticated else None,
-        session_id=user_id if not is_authenticated else None,
+        user_id=user_id_or_session if is_authenticated else None,
+        session_id=session_id if not is_authenticated else None,
     )
     
     return cart

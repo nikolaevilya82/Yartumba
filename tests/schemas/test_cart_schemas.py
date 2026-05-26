@@ -83,21 +83,21 @@ class TestCartItemBase:
             configuration_id="config-456",
             quantity=2,
             unit_price=Decimal("8500.00"),
-            saved_configuration_snapshot={"dimensions": {"width": 1000}}
+            configuration={"dimensions": {"width": 1000}}
         )
         assert item.furniture_type == "bookshelf"
         assert item.quantity == 2
         assert item.unit_price == Decimal("8500.00")
 
     def test_cart_item_base_without_snapshot(self):
-        """Позиция без снепшота"""
+        """Позиция без конфигурации"""
         item = CartItemBase(
             furniture_type="nightstand",
             furniture_id="furn-789",
             quantity=1,
             unit_price=Decimal("5200.00")
         )
-        assert item.saved_configuration_snapshot is None
+        assert item.configuration is None
 
 
 class TestCartItemCreate:
@@ -208,20 +208,20 @@ class TestCartSummary:
     def test_cart_summary_valid(self):
         """Валидное резюме"""
         summary = CartSummary(
-            items_count=3,
-            subtotal=Decimal("25200.00")
+            total_items=3,
+            total_price=Decimal("25200.00")
         )
-        assert summary.items_count == 3
-        assert summary.subtotal == Decimal("25200.00")
+        assert summary.total_items == 3
+        assert summary.total_price == Decimal("25200.00")
 
     def test_cart_summary_empty(self):
         """Пустая корзина"""
         summary = CartSummary(
-            items_count=0,
-            subtotal=Decimal("0.00")
+            total_items=0,
+            total_price=Decimal("0.00")
         )
-        assert summary.items_count == 0
-        assert summary.subtotal == Decimal("0.00")
+        assert summary.total_items == 0
+        assert summary.total_price == Decimal("0.00")
 
 
 class TestAddToCartRequest:
@@ -264,7 +264,7 @@ class TestAddToCartResponse:
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-        summary = CartSummary(items_count=1, subtotal=Decimal("8500.00"))
+        summary = CartSummary(total_items=1, total_price=Decimal("8500.00"))
         
         response = AddToCartResponse(
             cart_item=item,
@@ -281,7 +281,7 @@ class TestRemoveFromCartResponse:
 
     def test_remove_from_cart_response(self):
         """Структура ответа"""
-        summary = CartSummary(items_count=0, subtotal=Decimal("0.00"))
+        summary = CartSummary(total_items=0, total_price=Decimal("0.00"))
         
         response = RemoveFromCartResponse(
             removed_item_id="item-123",
@@ -309,7 +309,7 @@ class TestUpdateCartItemResponse:
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-        summary = CartSummary(items_count=1, subtotal=Decimal("42500.00"))
+        summary = CartSummary(total_items=1, total_price=Decimal("42500.00"))
         
         response = UpdateCartItemResponse(
             cart_item=item,
@@ -373,7 +373,7 @@ class TestCartItemResponseComputedFields:
 class TestCartResponseComputedFields:
     """Тесты вычисляемых полей CartResponse"""
 
-    def test_items_count_computed(self):
+    def test_total_items_computed(self):
         """Подсчёт количества товаров"""
         item1 = CartItemResponse(
             id="item-1",
@@ -402,16 +402,16 @@ class TestCartResponseComputedFields:
             id="cart-123",
             user_id="user-456",
             items=[item1, item2],
-            items_count=3,  # 2 + 1
-            subtotal=Decimal("22200.00"),
+            total_items=3,  # 2 + 1
+            total_price=Decimal("22200.00"),
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
         
-        assert cart.items_count == 3
+        assert cart.total_items == 3
 
-    def test_subtotal_computed(self):
-        """Подсчёт подытога"""
+    def test_total_price_computed(self):
+        """Подсчёт итоговой суммы"""
         item = CartItemResponse(
             id="item-1",
             cart_id="cart-123",
@@ -427,10 +427,10 @@ class TestCartResponseComputedFields:
         cart = CartResponse(
             id="cart-123",
             items=[item],
-            items_count=1,
-            subtotal=Decimal("8500.00"),
+            total_items=1,
+            total_price=Decimal("8500.00"),
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
         
-        assert cart.subtotal == Decimal("8500.00")
+        assert cart.total_price == Decimal("8500.00")

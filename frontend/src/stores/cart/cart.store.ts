@@ -28,6 +28,10 @@ class CartStore {
     return this.items.length === 0;
   }
 
+  get isLoading(): boolean {
+    return cartLoadingStore.isLoading;
+  }
+
   get discountedPrice(): number {
     const discount = cartPromocodeStore.discount;
     if (discount <= 0) return this.totalPrice;
