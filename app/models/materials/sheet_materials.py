@@ -35,6 +35,7 @@ class SheetMaterial(Base):
     decor_name = Column(String(100), nullable=True)  # Дуб сонома, Белый, Венге
     hex_code = Column(String(7), nullable=True)      # для визуализации
     texture_url = Column(String(500), nullable=True) # текстура
+    image_url = Column(String(500), nullable=True)   # превью материала
     
     # Единица измерения (лист, кв.м, пог.м)
     unit = Column(String(20), nullable=False, default="sheet")

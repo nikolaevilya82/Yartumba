@@ -36,6 +36,7 @@ def create_bookshelf(
         shelf_count=data.shelf_count,
         shelf_type=data.shelf_type,
         product_id=data.product_id,
+        image_url=data.image_url,
     )
     db.add(bookshelf)
     db.commit()

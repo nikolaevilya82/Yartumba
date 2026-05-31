@@ -22,6 +22,24 @@
 | `dresser_parts` | Детали комодов (боковины, полки, фасады) |
 | `drawers` | Универсальные выдвижные ящики |
 
+### Поля изображений
+
+Во всех моделях добавлено опциональное поле `image_url` (String 500). Если не задано — URL формируется автоматически по шаблону из `app/core/image_config.py`.
+
+| Таблица | Папка изображений |
+|---------|-------------------|
+| `categories` | `/images/ui/` |
+| `products` | `/images/products/` |
+| `bookshelves` | `/images/products/bookshelf/` |
+| `nightstands` | `/images/products/nightstand/` |
+| `dressers` | `/images/products/dresser/` |
+| `sheet_materials` | `/images/materials/sheet/` |
+| `edge_materials` | `/images/materials/edge/` |
+| `slide_guides` | `/images/hardware/slide_guides/` |
+| `hinges` | `/images/hardware/hinges/` |
+| `supports` | `/images/hardware/supports/` |
+| `wall_mounts` | `/images/hardware/wall_mounts/` |
+
 ### Материалы (пакет `app/models/materials/`)
 
 | Таблица | Описание |
@@ -156,9 +174,26 @@ app/
 │   │   ├── constants.py             # Константы (размеры, проценты)
 │   │   └── schemas.py               # Pydantic схемы
 │   └── cart_service.py          # Логика корзины
+├── services/             # Бизнес-логика
+│   ├── configurator/         # Конфигуратор (рефакторинг 2025)
+│   │   ├── __init__.py
+│   │   ├── configurator_service.py  # Главный сервис (оркестрация)
+│   │   ├── validators.py            # Валидаторы по типам мебели
+│   │   ├── calculators/             # Калькуляторы стоимости
+│   │   │   ├── furniture_calculator.py  # Универсальный калькулятор (общая логика)
+│   │   │   ├── nightstand_calculator.py
+│   │   │   ├── bookshelf_calculator.py
+│   │   │   ├── dresser_calculator.py
+│   │   │   └── README.md          # Документация по расчётам
+│   │   ├── material_options.py      # Получение материалов
+│   │   ├── constants.py             # Константы (размеры, проценты)
+│   │   └── schemas.py               # Pydantic схемы
+│   ├── cart_service.py          # Логика корзины
+│   └── image_service.py         # Генерация URL изображений
 └── core/                 # База, конфиг, DI
     ├── db_setup.py       # SQLAlchemy engine, SessionLocal, Base
-    └── config.py         # Конфигурация
+    ├── config.py         # Конфигурация
+    └── image_config.py   # Пути к frontend/public/images/
 ```
 
 **PostgreSQL:**
@@ -261,6 +296,8 @@ app/
     validation = service.validate("bookshelf", config)
     options = service.get_material_options()
     ```
+13. **Изображения** — все модели имеют опциональное поле `image_url`. Если не задано, URL формируется автоматически через `app.services.image_service` на основе `app.core.image_config`.
+14. **Статика изображений** — nginx раздаёт `/images/` из `frontend/public/images/`. Папки: `materials/`, `hardware/`, `products/`, `configurator/`, `ui/`, `uploads/`.
 
 ---
 

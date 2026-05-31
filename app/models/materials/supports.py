@@ -47,6 +47,9 @@ class Support(Base):
     # Цена за штуку в копейках
     price = Column(Integer, default=0)
     
+    # Изображение опоры
+    image_url = Column(String(500), nullable=True)
+    
     is_active = Column(String(10), default="active")
 
     def __repr__(self):
@@ -87,6 +90,9 @@ class WallMount(Base):
     
     # Цена за штуку в копейках
     price = Column(Integer, default=0)
+    
+    # Изображение крепления
+    image_url = Column(String(500), nullable=True)
     
     is_active = Column(String(10), default="active")
 

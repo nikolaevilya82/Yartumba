@@ -29,6 +29,7 @@ class Bookshelf(Base):
 
     shelf_count = Column(Integer, nullable=False, default=3)
     shelf_type = Column(String(50), nullable=False, default="open")
+    image_url = Column(String(500), nullable=True)
 
     product = relationship("Product", backref="bookshelf")
     materials = relationship(

@@ -38,6 +38,7 @@ def create_dresser(
         dresser_type=data.dresser_type,
         has_legs=data.has_legs,
         product_id=data.product_id,
+        image_url=data.image_url,
     )
     db.add(dresser)
     db.commit()
