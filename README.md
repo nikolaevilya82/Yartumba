@@ -63,7 +63,7 @@ python3 -m pytest tests/ -v --coverage
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 156 тестов проходят ✅
+**Статистика:** 176 тестов проходят ✅
 
 ### Frontend
 
@@ -145,7 +145,13 @@ Yartumba/
 │   │   └── materials/    # Материалы и фурнитура
 │   ├── api/              # API эндпоинты
 │   ├── services/         # Бизнес-логика
+│   │   ├── configurator/     # Сервис конфигуратора
+│   │   ├── cart_service.py   # Логика корзины
+│   │   └── image_service.py  # Генерация URL изображений
 │   └── core/             # Конфигурация, база, DI
+│       ├── db_setup.py       # SQLAlchemy
+│       ├── config.py         # Настройки приложения
+│       └── image_config.py   # Пути к изображениям
 ├── migrations/           # Миграции Alembic
 ├── tests/                # Тесты
 │   ├── catalog/          # Тесты каталога
@@ -266,13 +272,45 @@ MIT License — подробности в файле `LICENSE`
 
 ---
 
+## 🖼️ Изображения и статика
+
+Все модели (товары, материалы, фурнитура, категории) содержат опциональное поле `image_url`.
+Если оно не задано — URL формируется автоматически по шаблону:
+
+```
+/images/<категория>/<id>.jpg
+```
+
+**Папки статики** (раздаются nginx из `frontend/public/images/`):
+
+| Тип | Путь |
+|-----|------|
+| Листовые материалы | `/images/materials/sheet/` |
+| Кромка | `/images/materials/edge/` |
+| Направляющие | `/images/hardware/slide_guides/` |
+| Петли | `/images/hardware/hinges/` |
+| Опоры | `/images/hardware/supports/` |
+| Крепления | `/images/hardware/wall_mounts/` |
+| Полки | `/images/products/bookshelf/` |
+| Тумбы | `/images/products/nightstand/` |
+| Комоды | `/images/products/dresser/` |
+| UI | `/images/ui/` |
+| Загрузки | `/images/uploads/` |
+
+**Сервис генерации URL:**
+```python
+from app.services.image_service import get_sheet_material_image_url
+
+url = get_sheet_material_image_url(material.id, material.image_url)
+```
+
 ## 📊 Статус проекта
 
 | Компонент | Статус |
 |-----------|--------|
 | Модели БД | ✅ Готово |
 | API Routes (CRUD) | ✅ Готово |
-| Конфигуратор | 🟡 В разработке |
+| Конфигуратор | ✅ Готово |
 | Корзина | ✅ API + Frontend готово |
 | Заказы | ⏸️ Не реализовано |
 | Авторизация | ⏸️ Не реализовано |

@@ -14,6 +14,7 @@ class Category(Base):
     name = Column(String(100), unique=True, nullable=False, index=True)
     slug = Column(String(100), unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
+    image_url = Column(String(500), nullable=True)
     sort_order = Column(Integer, default=0)
 
     def __repr__(self):

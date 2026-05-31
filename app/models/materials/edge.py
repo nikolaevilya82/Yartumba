@@ -44,6 +44,9 @@ class EdgeMaterial(Base):
     # Цена за погонный метр в копейках
     price_per_meter = Column(Integer, default=0)
     
+    # Изображение кромки
+    image_url = Column(String(500), nullable=True)
+    
     is_active = Column(String(10), default="active")
 
     sheet_material = relationship("SheetMaterial", back_populates="edges")

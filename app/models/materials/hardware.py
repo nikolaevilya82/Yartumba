@@ -43,6 +43,9 @@ class SlideGuide(Base):
     # Цена в копейках
     price = Column(Integer, default=0)
     
+    # Изображение направляющих
+    image_url = Column(String(500), nullable=True)
+    
     is_active = Column(String(10), default="active")
 
     def __repr__(self):
@@ -86,6 +89,9 @@ class Hinge(Base):
     
     # Цена в копейках
     price = Column(Integer, default=0)
+    
+    # Изображение петель
+    image_url = Column(String(500), nullable=True)
     
     is_active = Column(String(10), default="active")
 

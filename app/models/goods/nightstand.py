@@ -30,6 +30,7 @@ class Nightstand(Base):
     drawer_count = Column(Integer, nullable=False, default=1)
     has_open_shelf = Column(Boolean, default=False)
     leg_type = Column(String(50), nullable=False, default="standard")
+    image_url = Column(String(500), nullable=True)
     
     product = relationship("Product", backref="nightstand")
     materials = relationship(

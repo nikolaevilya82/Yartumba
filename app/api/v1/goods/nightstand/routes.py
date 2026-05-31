@@ -37,6 +37,7 @@ def create_nightstand(
         has_open_shelf=data.has_open_shelf,
         leg_type=data.leg_type,
         product_id=data.product_id,
+        image_url=data.image_url,
     )
     db.add(nightstand)
     db.commit()

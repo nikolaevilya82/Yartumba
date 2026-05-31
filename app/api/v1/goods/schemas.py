@@ -18,6 +18,7 @@ class GoodsBase(BaseModel):
 class GoodsCreate(GoodsBase):
     """Создание товара"""
     product_id: Optional[UUID] = None
+    image_url: Optional[str] = Field(None, max_length=500, description="URL изображения изделия")
 
 
 class GoodsUpdate(BaseModel):
@@ -25,12 +26,14 @@ class GoodsUpdate(BaseModel):
     width: Optional[int] = Field(None, gt=0)
     height: Optional[int] = Field(None, gt=0)
     depth: Optional[int] = Field(None, gt=0)
+    image_url: Optional[str] = Field(None, max_length=500, description="URL изображения изделия")
 
 
 class GoodsResponse(GoodsBase):
     """Ответ с товаром"""
     id: UUID
     product_id: Optional[UUID]
+    image_url: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

@@ -27,6 +27,9 @@ class Product(Base):
     # Базовая цена без опций
     base_price = Column(Integer, nullable=False)  # в копейках
     
+    # Изображение товара
+    image_url = Column(String(500), nullable=True)
+    
     # Для фильтрации и поиска
     is_active = Column(Boolean, default=True, index=True)
     sort_order = Column(Integer, default=0)

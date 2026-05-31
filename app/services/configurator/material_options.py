@@ -13,6 +13,14 @@ from app.models.materials import (
     Support,
     WallMount,
 )
+from app.services.image_service import (
+    get_sheet_material_image_url,
+    get_edge_material_image_url,
+    get_slide_guide_image_url,
+    get_hinge_image_url,
+    get_support_image_url,
+    get_wall_mount_image_url,
+)
 
 
 def get_material_options(db: Session) -> Dict[str, List[Dict[str, Any]]]:
@@ -52,6 +60,10 @@ def _get_sheet_materials(db: Session) -> List[Dict[str, Any]]:
             "decor_name": material.decor_name,
             "hex_code": material.hex_code,
             "price": material.price,
+            "image_url": get_sheet_material_image_url(
+                material.id, material.image_url
+            ),
+            "texture_url": material.texture_url,
         })
     
     return materials
@@ -70,6 +82,9 @@ def _get_edge_materials(db: Session) -> List[Dict[str, Any]]:
             "width": edge.width,
             "decor_name": edge.decor_name,
             "price_per_meter": edge.price_per_meter,
+            "image_url": get_edge_material_image_url(
+                edge.id, edge.image_url
+            ),
         })
     
     return materials
@@ -89,6 +104,9 @@ def _get_slide_guides(db: Session) -> List[Dict[str, Any]]:
             "load_capacity": guide.load_capacity,
             "has_soft_close": guide.has_soft_close,
             "price": guide.price,
+            "image_url": get_slide_guide_image_url(
+                guide.id, guide.image_url
+            ),
         })
     
     return guides
@@ -107,6 +125,9 @@ def _get_hinges(db: Session) -> List[Dict[str, Any]]:
             "opening_angle": hinge.opening_angle,
             "has_soft_close": hinge.has_soft_close,
             "price": hinge.price,
+            "image_url": get_hinge_image_url(
+                hinge.id, hinge.image_url
+            ),
         })
     
     return hinges
@@ -126,6 +147,9 @@ def _get_supports(db: Session) -> List[Dict[str, Any]]:
             "diameter": support.diameter,
             "is_adjustable": support.is_adjustable,
             "price": support.price,
+            "image_url": get_support_image_url(
+                support.id, support.image_url
+            ),
         })
     
     return supports
@@ -145,6 +169,9 @@ def _get_wall_mounts(db: Session) -> List[Dict[str, Any]]:
             "adjustment": mount.adjustment,
             "is_hidden": mount.is_hidden,
             "price": mount.price,
+            "image_url": get_wall_mount_image_url(
+                mount.id, mount.image_url
+            ),
         })
     
     return mounts

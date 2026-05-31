@@ -31,6 +31,7 @@ class Dresser(Base):
     drawer_rows = Column(Integer, nullable=False, default=2)
     dresser_type = Column(String(50), nullable=False, default="standard")
     has_legs = Column(Boolean, default=True)
+    image_url = Column(String(500), nullable=True)
     
     product = relationship("Product", backref="dresser")
     materials = relationship(
