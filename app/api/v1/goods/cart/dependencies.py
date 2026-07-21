@@ -28,6 +28,33 @@ def get_optional_user_id() -> Optional[str]:
     return None
 
 
+def get_current_user_id() -> str:
+    """
+    Получить user_id из токена авторизации (обязательно).
+    
+    Используется в эндпоинтах, требующих аутентификации.
+    
+    TODO: Реализовать проверку JWT токена после внедрения авторизации.
+    Сейчас заглушка — всегда возвращает фиктивный ID для разработки.
+    
+    Returns:
+        str: ID пользователя
+        
+    Raises:
+        HTTPException: 401 если пользователь не авторизован
+    """
+    # TODO: Добавить проверку JWT токена, извлекать user_id из payload
+    user_id = None  # Здесь будет логика извлечения из токена
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Требуется авторизация",
+        )
+    
+    return user_id
+
+
 def get_optional_session_id(request: Request) -> Optional[str]:
     """
     Получить session_id из query-параметра, заголовка или cookies.

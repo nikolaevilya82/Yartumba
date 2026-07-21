@@ -6,7 +6,6 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, ForeignKey, Integer, Numeric, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 from app.core.db_setup import Base
@@ -63,17 +62,20 @@ class CartItem(Base):
     )
     
     # Тип товара для быстрого доступа (дублируем для производительности)
-    product_type = Column(String(50), nullable=False, index=True)  # bookshelf, nightstand, dresser
+    furniture_type = Column(String(50), nullable=False, index=True)  # bookshelf, nightstand, dresser
     
     # ID конкретной мебели (bookshelf.id, nightstand.id, dresser.id)
     furniture_id = Column(PG_UUID(as_uuid=True), nullable=False, index=True)
+
+    # ID конфигурации из каталога (опционально)
+    configuration_id = Column(PG_UUID(as_uuid=True), nullable=True, index=True)
     
-    # Конфигурация товара (JSONB для PostgreSQL, JSON для SQLite)
-    # Структура зависит от product_type:
+    # Конфигурация товара (JSON для совместимости с SQLite и PostgreSQL)
+    # Структура зависит от furniture_type:
     # - bookshelf: {"parts": [...], "materials": {...}, "dimensions": {...}}
     # - nightstand: {"parts": [...], "drawers": [...], "materials": {...}}
     # - dresser: {"parts": [...], "drawers": [...], "facade_options": {...}}
-    configuration = Column(PG_JSONB() if hasattr(PG_JSONB, '_is_postgresql') else JSON, nullable=False)
+    configuration = Column(JSON, nullable=False)
     
     # Количество
     quantity = Column(Integer, nullable=False, default=1)
@@ -85,7 +87,7 @@ class CartItem(Base):
     total_price = Column(Numeric(10, 2), nullable=False)
     
     # Снепшот материалов (для истории цен и проверки актуальности)
-    materials_snapshot = Column(PG_JSONB() if hasattr(PG_JSONB, '_is_postgresql') else JSON, nullable=True)
+    materials_snapshot = Column(JSON, nullable=True)
     
     # Дата создания
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -100,7 +102,7 @@ class CartItem(Base):
     product = relationship("Product", lazy="joined")
     
     def __repr__(self):
-        return f"<CartItem {self.id} product={self.product_id} type={self.product_type} qty={self.quantity}>"
+        return f"<CartItem {self.id} product={self.product_id} type={self.furniture_type} qty={self.quantity}>"
     
     def get_furniture_object(self, db):
         """
@@ -112,13 +114,13 @@ class CartItem(Base):
         Returns:
             Bookshelf | Nightstand | Dresser | None
         """
-        if self.product_type == "bookshelf":
+        if self.furniture_type == "bookshelf":
             from app.models.goods import Bookshelf
             return db.query(Bookshelf).filter(Bookshelf.id == self.furniture_id).first()
-        elif self.product_type == "nightstand":
+        elif self.furniture_type == "nightstand":
             from app.models.goods import Nightstand
             return db.query(Nightstand).filter(Nightstand.id == self.furniture_id).first()
-        elif self.product_type == "dresser":
+        elif self.furniture_type == "dresser":
             from app.models.goods import Dresser
             return db.query(Dresser).filter(Dresser.id == self.furniture_id).first()
         return None
@@ -143,7 +145,7 @@ class CartItem(Base):
         service = create_configurator_service(db)
         
         # Определяем тип мебели для конфигуратора
-        furniture_type = self.product_type  # bookshelf, nightstand, dresser
+        furniture_type = self.furniture_type  # bookshelf, nightstand, dresser
         
         # Расчёт стоимости через конфигуратор
         result = service.calculate(furniture_type, self.configuration)

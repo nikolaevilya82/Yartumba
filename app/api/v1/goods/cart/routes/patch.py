@@ -2,7 +2,7 @@
 PATCH эндпоинты корзины
 SRP: Только PATCH запросы
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.goods.dependencies import get_db
@@ -60,7 +60,7 @@ async def update_cart_item_quantity(
         
         if not cart_item:
             raise HTTPException(
-                status_code=HTTPException.status_code,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Товар не найден в корзине"
             )
         

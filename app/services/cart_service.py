@@ -397,7 +397,9 @@ class CartService:
                     quantity=guest_item.quantity,
                     unit_price=guest_item.unit_price,
                     total_price=guest_item.total_price,
-                    saved_configuration_snapshot=guest_item.saved_configuration_snapshot
+                    materials_snapshot=guest_item.materials_snapshot,
+                    configuration=guest_item.configuration,
+                    product_id=guest_item.product_id,
                 )
                 db.add(new_item)
         

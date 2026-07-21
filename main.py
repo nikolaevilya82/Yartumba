@@ -1,9 +1,8 @@
-id: Mapped[uuid.UUID] = mapped_column(
-    UUID(as_uuid=True),
-    primary_key=True,
-    default=uuid.uuid4
-)
-client_id: Mapped[uuid.UUID] = mapped_column(
-    ForeignKey("client.id", ondelete="CASCADE"),
-    nullable=False
-)
+"""
+Корневая точка входа приложения Yartumba.
+Реальное FastAPI-приложение определено в app/main.py.
+Использование: uvicorn main:app --reload
+"""
+from app.main import app  # noqa: F401
+
+__all__ = ["app"]

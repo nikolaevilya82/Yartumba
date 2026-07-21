@@ -6,84 +6,7 @@
 
 ---
 
-## 🔴 КРИТИЧЕСКИЕ БАГИ (код сломан в рантайме)
-
-### [ ] 1. Корзина: модель и API/сервис рассинхронизированы
-**Проблема:** `CartItem` (app/models/cart.py:66) использует поле `product_type`, а весь слой API/сервис/схемы используют `furniture_type` и `configuration_id`, которых **нет в модели и в БД**. Любой запрос к API корзины → `AttributeError`.
-
-Дополнительно в `cart_service.py:400` (merge_carts) используется `saved_configuration_snapshot`, которого нет в модели (там `materials_snapshot`).
-
-**Рассинхрон:**
-| Слой | Поле типа | Поле ID конфига |
-|------|-----------|-----------------|
-| Модель `CartItem` + миграция 001 + test_cart_item.py | `product_type` | ❌ нет |
-| Pydantic-схемы, CartService, все роуты | `furniture_type` | `configuration_id` |
-
-**Почему не ловится тестами:** `tests/integration/test_cart_integration.py` — все классы помечены `@pytest.mark.skip`.
-
-**Решение (рекомендуется Вариант A):**
-- [ ] Вариант A: переименовать `product_type` → `furniture_type` в модели + добавить поле `configuration_id` + новая миграция + обновить test_cart_item.py. Так API становится консистентным и соответствует `furniture_type` в Drawer/FurnitureMaterial.
-- [ ] Вариант B: переименовать `furniture_type` → `product_type` во всех схемах/сервисах/роутах.
-- [ ] Поправить `saved_configuration_snapshot` → `materials_snapshot` в cart_service.py:400
-- [ ] Снять `@pytest.mark.skip` с интеграционных тестов корзины и реализовать их (нужны фикстуры `client`, `authenticated_user` — см. пункт 21)
-
-### [ ] 2. Корневой `main.py` сломан
-**Проблема:** README:115 инструктирует `uvicorn main:app --reload`, но корневой `main.py` содержит 9 строк мусора (обрывки определения колонок модели), а не FastAPI-приложение. Реальное приложение — `app/main.py`.
-
-**Решение (на выбор):**
-- [ ] Удалить корневой `main.py` + поправить README на `uvicorn app.main:app --reload`
-- [ ] ИЛИ сделать корневой `main.py` правильной точкой входа (`from app.main import app`)
-
-### [ ] 3. `patch.py:63` — баг с HTTP-статусом
-**Проблема:**
-```python
-raise HTTPException(status_code=HTTPException.status_code, detail="Товар не найден в корзине")
-```
-`HTTPException.status_code` — атрибут экземпляра, не класса → выбросит `AttributeError` вместо 500.
-
-**Решение:** заменить на `status.HTTP_500_INTERNAL_SERVER_ERROR` (или лучше — 404, т.к. товар не найден).
-
-### [ ] 4. Хак с типом JSONB в модели не работает
-**Проблема:** `cart.py:76,88`:
-```python
-configuration = Column(PG_JSONB() if hasattr(PG_JSONB, '_is_postgresql') else JSON, ...)
-```
-У класса `postgresql.JSONB` нет атрибута `_is_postgresql` → `hasattr` всегда `False` → колонка всегда объявляется как `JSON`, а миграция создаёт `JSONB`. Несоответствие → Alembic autogenerate постоянно предлагает «поправить» тип.
-
-**Решение:** использовать универсальный `from sqlalchemy import JSON` (работает и в SQLite, и в PG), либо явный `JSONB` для PostgreSQL с условием по движку БД.
-
----
-
 ## 🟠 СЕРЬЁЗНЫЕ ПРОБЛЕМЫ
-
-### [ ] 5. CORS небезопасен и технически некорректен
-**Проблема:** `app/main.py:16` — `allow_origins=["*"]` + `allow_credentials=True`. Браузеры отклоняют эту комбинацию.
-
-**Решение:** вынести список доменов в конфиг (env-переменная `CORS_ORIGINS`), для DEV — localhost:5173 и т.п.
-
-### [ ] 6. `app/core/db_setup.py` — `echo=True` захардкожен
-**Проблема:** SQL-логирование в продакшене засоряет логи и тормозит работу.
-
-**Решение:** `echo=os.getenv("SQL_ECHO", "false").lower() == "true"`.
-
-### [ ] 7. `app/core/config.py` пустой
-**Проблема:** нет класса настроек. `DATABASE_URL` читается прямо в db_setup.py, CORS захардкожен, `.env.example` содержит только DATABASE_URL.
-
-**Решение:** создать Pydantic Settings класс (`Settings`) со всеми переменными: DATABASE_URL, ENV (DEV/PROD), CORS_ORIGINS, SECRET_KEY, SQL_ECHO, SESSION_SECRET и т.д. Использовать во всём проекте через DI/синглтон.
-
-### [ ] 8. Эндпоинты конфигуратора не используют DI
-**Проблема:** `app/api/v1/configurator.py` создаёт `db = SessionLocal()` вручную в каждом обработчике вместо `Depends(get_db)` (который уже есть в `goods/dependencies.py`).
-
-Дополнительно: дублирование if/elif по `furniture_type` (строки 74–84 и 113–119) — сервис сам умеет валидировать тип, блоки избыточны.
-
-**Решение:**
-- [ ] Заменить `db = SessionLocal()` на `db: Session = Depends(get_db)` (вынести `get_db` в общее место, например `app/core/dependencies.py`)
-- [ ] Убрать дублирующие if/elif — просто вызывать `service.validate/calculate(furniture_type, config)` и ловить ValueError → HTTPException
-
-### [ ] 9. `merge.py` — `user_id: str` как query-параметр
-**Проблема:** `async def merge_carts(request: dict, user_id: str, ...)` — FastAPI воспримет `user_id` как обязательный query-параметр, а не «получить из токена».
-
-**Решение:** реализовать зависимость `get_current_user_id` (пока заглушка-TODO), использовать `user_id: str = Depends(get_current_user_id)`. Также `request: dict` → нормальная Pydantic-схема `MergeCartsRequest`.
 
 ### [ ] 10. `app/__init__.py` и `app/models/__init__.py` расходятся
 **Проблемы:**
@@ -185,24 +108,24 @@ configuration = Column(PG_JSONB() if hasattr(PG_JSONB, '_is_postgresql') else JS
 `conftest.py` содержит только `engine` и `db_session`, но в skipped-тестах корзины используются `client`, `authenticated_user`, `cart_item`, `nightstand_config`, `promocode`.
 - [ ] Добавить фикстуру `client` (TestClient с переопределённым `get_db` на in-memory SQLite)
 - [ ] Добавить фикстуры `authenticated_user`, `cart_item`, `nightstand_config`, `promocode`
-- [ ] Снять skip с тестов корзины после пункта 1
+- [ ] Снять skip с тестов корзины (нужны фикстуры `client`, `authenticated_user`)
 
 ---
 
 ## 📋 Рекомендуемый порядок выполнения
 
-1. **#1–#4** — критические баги (корзина, main.py, patch.py, JSONB-хак). Без них проект не работает.
-2. **#5–#10** — безопасность и архитектура (CORS, config, DI, консистентность экспортов).
-3. **#11–#16** — чистка мёртвого кода, документации, зависимостей.
-4. **#17–#21** — полировка README и тестов.
+1. **#10** — консистентность экспортов.
+2. **#11–#16** — чистка мёртвого кода, документации, зависимостей.
+3. **#17–#21** — полировка README и тестов.
 
 ---
 
 ## Заметки для следующих сессий
 
 - **Всегда спрашивать согласие пользователя** перед изменениями (просил в первой сессии).
-- **Тесты корзины skipped** — значит баг #1 не ловится. После фикса обязательно раскомментить тесты.
-- **Реальное приложение в `app/main.py`**, не в корневом `main.py`.
-- **`get_db` живёт в `app/api/v1/goods/dependencies.py`** — лучше вынести в `app/core/dependencies.py` для общего использования (конфигуратору тоже нужен).
+- **Критические баги #1–#4 исправлены (2026-07-21):** модель, миграция, сервис, тесты корзины синхронизированы. `product_type` → `furniture_type`, добавлен `configuration_id`, JSONB-хак убран, `main.py` — точка входа, `patch.py` — корректный статус 404.
+- **#5–#9 исправлены (2026-07-21):** CORS вынесен в конфиг, `echo` читается из `SQL_ECHO`, создан `app/core/config.py` с `Settings`, создан `app/core/dependencies.py` с общим `get_db`, конфигуратор использует `Depends(get_db)`, `merge.py` получил `MergeCartsRequest` и `get_current_user_id`.
+- **Тесты корзины skipped** — интеграционные тесты (`tests/integration/test_cart_integration.py`) по-прежнему пропущены. Для их разблокировки нужны фикстуры `client` и `authenticated_user` (см. пункт 21).
+- **Реальное приложение в `app/main.py`**, корневой `main.py` теперь корректно импортирует `from app.main import app`.
 - **KODA.md и README.md местами расходятся с реальностью** — сверяться с кодом, не с докой.
 - **Есть дублирующие модули моделей** (`app/models/sales/cart.py` vs `app/models/cart.py`) — выяснить у пользователя, какой каноничный.
