@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.v1.goods.dependencies import get_db
-from app.api.v1.goods.cart.schemas import CartItemResponse, CartResponse
+from app.api.v1.goods.cart.dependencies import get_current_user_id
+from app.api.v1.goods.cart.schemas import (
+    CartItemResponse,
+    CartResponse,
+    MergeCartsRequest,
+)
 from app.models.cart import Cart
 from app.services.cart_service import CartService
 
@@ -15,8 +20,8 @@ router = APIRouter(tags=["Cart"])
 
 @router.post("/merge", response_model=CartResponse, summary="Объединить корзины")
 async def merge_carts(
-    request: dict,
-    user_id: str,  # TODO: получить из токена авторизации через dependency
+    request: MergeCartsRequest,
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
@@ -24,32 +29,23 @@ async def merge_carts(
     
     **Auth:** Required
     
-    **Request:** { "session_id": "uuid-string" }
+    **Request:** MergeCartsRequest (session_id)
     
     **Response:** CartResponse
     
     **Status:** 200 OK
+    
+    **Errors:**
+    - 401: пользователь не авторизован
+    - 400: не указан session_id
     """
-    if not user_id:
-        raise HTTPException(
-            status_code=401,
-            detail="Требуется авторизация"
-        )
-    
-    guest_session_id = request.get("session_id")
-    if not guest_session_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Требуется session_id"
-        )
-    
     cart_service = CartService()
     merged_cart = cart_service.merge_carts(
         db=db,
-        guest_session_id=guest_session_id,
+        guest_session_id=request.session_id,
         user_id=user_id,
     )
-    
+
     # Формируем ответ
     items = []
     for item in merged_cart.items:
@@ -67,10 +63,10 @@ async def merge_carts(
             created_at=item.created_at,
             updated_at=item.updated_at,
         ))
-    
+
     total_items = sum(item.quantity for item in merged_cart.items)
     total_price = sum(item.total_price for item in merged_cart.items)
-    
+
     return CartResponse(
         id=str(merged_cart.id),
         user_id=str(merged_cart.user_id) if merged_cart.user_id else None,

@@ -82,7 +82,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={
                 "dimensions": {"width": 1000, "height": 1800, "depth": 300},
@@ -101,7 +101,7 @@ class TestCartItem:
         assert cart_item.quantity == 1
         assert cart_item.unit_price == Decimal("8500.00")
         assert cart_item.total_price == Decimal("8500.00")
-        assert cart_item.product_type == "bookshelf"
+        assert cart_item.furniture_type == "bookshelf"
 
     def test_cart_item_total_price_calculation(self, db_session, sample_cart, sample_product):
         """Автоматический расчёт total_price"""
@@ -117,7 +117,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="nightstand",
+            furniture_type="nightstand",
             furniture_id=nightstand.id,
             configuration={"dimensions": {"width": 500, "height": 450, "depth": 400}},
             quantity=3,
@@ -154,7 +154,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="dresser",
+            furniture_type="dresser",
             furniture_id=dresser.id,
             configuration=bookshelf_config,
             quantity=1,
@@ -189,7 +189,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={"dimensions": {}},
             quantity=1,
@@ -217,7 +217,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=1,
@@ -246,7 +246,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=1,
@@ -282,7 +282,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=1,
@@ -314,7 +314,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=1,
@@ -344,7 +344,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="nightstand",
+            furniture_type="nightstand",
             furniture_id=nightstand.id,
             configuration={},
             quantity=1,
@@ -373,7 +373,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="dresser",
+            furniture_type="dresser",
             furniture_id=dresser.id,
             configuration={},
             quantity=1,
@@ -402,7 +402,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="invalid_type",
+            furniture_type="invalid_type",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=1,
@@ -430,7 +430,7 @@ class TestCartItem:
         cart_item = CartItem(
             cart_id=sample_cart.id,
             product_id=sample_product.id,
-            product_type="bookshelf",
+            furniture_type="bookshelf",
             furniture_id=bookshelf.id,
             configuration={},
             quantity=2,
@@ -459,7 +459,7 @@ class TestCartItem:
             CartItem(
                 cart_id=sample_cart.id,
                 product_id=sample_product.id,
-                product_type="bookshelf",
+                furniture_type="bookshelf",
                 furniture_id=bookshelf.id,
                 configuration={},
                 quantity=1,
@@ -469,7 +469,7 @@ class TestCartItem:
             CartItem(
                 cart_id=sample_cart.id,
                 product_id=sample_product.id,
-                product_type="nightstand",
+                furniture_type="nightstand",
                 furniture_id=nightstand.id,
                 configuration={},
                 quantity=2,
@@ -479,7 +479,7 @@ class TestCartItem:
             CartItem(
                 cart_id=sample_cart.id,
                 product_id=sample_product.id,
-                product_type="dresser",
+                furniture_type="dresser",
                 furniture_id=dresser.id,
                 configuration={},
                 quantity=1,
@@ -493,9 +493,9 @@ class TestCartItem:
         
         # Проверка всех позиций
         assert len(sample_cart.items) == 3
-        assert any(item.product_type == "bookshelf" for item in sample_cart.items)
-        assert any(item.product_type == "nightstand" for item in sample_cart.items)
-        assert any(item.product_type == "dresser" for item in sample_cart.items)
+        assert any(item.furniture_type == "bookshelf" for item in sample_cart.items)
+        assert any(item.furniture_type == "nightstand" for item in sample_cart.items)
+        assert any(item.furniture_type == "dresser" for item in sample_cart.items)
         
         # Проверка итоговой суммы
         total = sum(item.total_price for item in sample_cart.items)

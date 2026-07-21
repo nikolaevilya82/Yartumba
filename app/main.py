@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as v1_router
+from app.core.config import settings
 
 app = FastAPI(
     title="Yartumba API",
@@ -12,10 +13,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS
+# CORS — читаем origins из конфига
+# В DEV режиме: http://localhost:5173, http://localhost:3000
+# В PROD режиме: задаётся через CORS_ORIGINS в .env
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

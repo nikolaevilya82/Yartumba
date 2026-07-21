@@ -160,3 +160,8 @@ class UpdateCartItemResponse(BaseModel):
     message: str = "Данные корзины обновлены"
     cart_item: CartItemResponse
     cart_summary: CartSummary
+
+
+class MergeCartsRequest(BaseModel):
+    """Запрос объединения корзин (гостевая → пользовательская)"""
+    session_id: str = Field(..., description="Session ID гостевой корзины")
