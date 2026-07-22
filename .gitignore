@@ -44,3 +44,9 @@ build/
 tmp/
 temp/
 *.tmp
+
+# Frontend
+frontend/node_modules/
+
+# Учебные материалы
+frontend/REACT_TYPESCRIPT_LEARNING_PLAN.txt

@@ -20,7 +20,9 @@ from app.models.goods import (
     Bookshelf,
     BookshelfPart,
     Nightstand,
+    NightstandPart,
     Dresser,
+    DresserPart,
 )
 
 # Компоненты
@@ -48,7 +50,9 @@ __all__ = [
     "Bookshelf",
     "BookshelfPart",
     "Nightstand",
+    "NightstandPart",
     "Dresser",
+    "DresserPart",
     # Components
     "Drawer",
     # Materials
