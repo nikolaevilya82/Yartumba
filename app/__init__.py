@@ -19,7 +19,9 @@ from app.models.goods import (
     Bookshelf,
     BookshelfPart,
     Nightstand,
+    NightstandPart,
     Dresser,
+    DresserPart,
 )
 
 # Компоненты
@@ -36,7 +38,10 @@ from app.models.materials import (
 )
 
 # Связь материалов с изделиями
-from app.models.catalog.material import FurnitureMaterial
+from app.models.catalog import FurnitureMaterial
+
+# Корзина
+from app.models.cart import Cart, CartItem
 
 __all__ = [
     # Catalog
@@ -53,7 +58,9 @@ __all__ = [
     "Bookshelf",
     "BookshelfPart",
     "Nightstand",
+    "NightstandPart",
     "Dresser",
+    "DresserPart",
     # Components
     "Drawer",
     # Materials
@@ -65,4 +72,7 @@ __all__ = [
     "WallMount",
     # Material link
     "FurnitureMaterial",
+    # Cart
+    "Cart",
+    "CartItem",
 ]

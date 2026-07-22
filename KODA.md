@@ -173,26 +173,12 @@ app/
 │   │   ├── material_options.py      # Получение материалов
 │   │   ├── constants.py             # Константы (размеры, проценты)
 │   │   └── schemas.py               # Pydantic схемы
-│   └── cart_service.py          # Логика корзины
-├── services/             # Бизнес-логика
-│   ├── configurator/         # Конфигуратор (рефакторинг 2025)
-│   │   ├── __init__.py
-│   │   ├── configurator_service.py  # Главный сервис (оркестрация)
-│   │   ├── validators.py            # Валидаторы по типам мебели
-│   │   ├── calculators/             # Калькуляторы стоимости
-│   │   │   ├── furniture_calculator.py  # Универсальный калькулятор (общая логика)
-│   │   │   ├── nightstand_calculator.py
-│   │   │   ├── bookshelf_calculator.py
-│   │   │   ├── dresser_calculator.py
-│   │   │   └── README.md          # Документация по расчётам
-│   │   ├── material_options.py      # Получение материалов
-│   │   ├── constants.py             # Константы (размеры, проценты)
-│   │   └── schemas.py               # Pydantic схемы
 │   ├── cart_service.py          # Логика корзины
 │   └── image_service.py         # Генерация URL изображений
 └── core/                 # База, конфиг, DI
     ├── db_setup.py       # SQLAlchemy engine, SessionLocal, Base
     ├── config.py         # Конфигурация
+    ├── dependencies.py   # Общий get_db()
     └── image_config.py   # Пути к frontend/public/images/
 ```
 
@@ -376,7 +362,7 @@ app/services/configurator/
 ├── schemas.py                      # Pydantic схемы для конфигураций
 └── calculators/
     ├── __init__.py                 # Фабрика калькуляторов
-    ├── base_calculator.py          # Базовый класс для расчётов
+    ├── furniture_calculator.py          # Базовый класс для расчётов
     ├── nightstand_calculator.py    # Расчёт тумбы
     ├── bookshelf_calculator.py     # Расчёт полки
     ├── dresser_calculator.py       # Расчёт комода
@@ -388,18 +374,18 @@ app/services/configurator/
 **SRP** — каждый класс отвечает за одну задачу:
 - `ConfiguratorService` — оркестрация (валидация + расчёт)
 - `NightstandValidator/BookshelfValidator/DresserValidator` — валидация
-- `NightstandCalculator/BookstandCalculator/DresserCalculator` — расчёт стоимости
+- `NightstandCalculator/BookshelfCalculator/DresserCalculator` — расчёт стоимости
 - `get_material_options` — получение материалов
 
 **OCP** — добавление нового типа мебели:
-1. Создать `new_furniture_calculator.py` наследуя `BaseCostCalculator`
+1. Создать `new_furniture_calculator.py` наследуя `FurnitureCostCalculator`
 2. Создать `NewFurnitureValidator` наследуя `BaseValidator`
 3. Добавить в фабрики в `calculators/__init__.py` и `validators.py`
 
 **LSP** — все калькуляторы и валидаторы заменяемы через базовые классы.
 
 **ISP** — минимальные интерфейсы:
-- `BaseCostCalculator` — только методы расчёта
+- `FurnitureCostCalculator` — только методы расчёта
 - `BaseValidator` — только метод валидации
 
 **DIP** — инъекция зависимости через `db: Session`, фабрики создают объекты динамически.
