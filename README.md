@@ -173,7 +173,19 @@ Yartumba/
 │   │   │   ├── configurator/ # MobX (конфигуратор)
 │   │   │   └── ui/           # MobX (UI состояние)
 │   │   ├── pages/            # Страницы (catalog, cart, auth)
-│   │   └── routes/           # Роутинг (AppRoutes)
+│   │   │   ├── catalog/
+│   │   │   │   └── CatalogPage.jsx
+│   │   │   ├── configurator/
+│   │   │   │   └── ConfiguratorPage.jsx
+│   │   │   ├── cart/
+│   │   │   │   ├── CartPage.jsx
+│   │   │   │   ├── CartPage.css
+│   │   │   │   ├── CheckoutPage.jsx
+│   │   │   │   └── CheckoutPage.css
+│   │   │   └── auth/
+│   │   │       ├── LoginPage.jsx
+│   │   │       └── RegisterPage.jsx
+│   │   └── routes/           # Роутинг (AppRoutes) — включает /cart/checkout → CheckoutPage
 │   └── tests/                # Тесты фронтенда
 │       ├── unit/
 │       │   ├── core/
@@ -312,7 +324,7 @@ url = get_sheet_material_image_url(material.id, material.image_url)
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | ✅ Готово |
 | Корзина | ✅ API + Frontend готово |
-| Заказы | ⏸️ Не реализовано |
+| Заказы | 🟡 Фронтенд готов (CheckoutPage), бэкенд не реализован |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (каталог) | ✅ Готово |
 | Фронтенд (конфигуратор) | 🟡 Заглушка |

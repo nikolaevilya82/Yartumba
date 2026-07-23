@@ -622,12 +622,15 @@ frontend/src/
 │   ├── configurator/
 │   │   └── ConfiguratorPage.jsx  # Страница конфигуратора
 │   ├── cart/
-│   │   └── CartPage.jsx          # Корзина
+│   │   ├── CartPage.jsx          # Корзина
+│   │   ├── CartPage.css
+│   │   ├── CheckoutPage.jsx      # Оформление заказа (форма + экран успеха)
+│   │   └── CheckoutPage.css
 │   └── auth/
 │       ├── LoginPage.jsx
 │       └── RegisterPage.jsx
 └── routes/
-    └── AppRoutes.jsx         # Роутер (Routes, Route)
+    └── AppRoutes.jsx         # Роутер (Routes, Route) — включает /cart/checkout → CheckoutPage
 ```
 
 **Frontend зависимости:**
@@ -651,7 +654,7 @@ frontend/src/
 | API Routes (CRUD) | ✅ Готово |
 | Конфигуратор | ✅ Готово |
 | Корзина | ✅ API + Frontend готово |
-| Заказы | ⏸️ Не реализовано |
+| Заказы | 🟡 Фронтенд готов (CheckoutPage), бэкенд не реализован |
 | Авторизация | ⏸️ Не реализовано |
 | Фронтенд (каталог) | ✅ Готово |
 | Фронтенд (конфигуратор) | 🟡 Заглушка |
