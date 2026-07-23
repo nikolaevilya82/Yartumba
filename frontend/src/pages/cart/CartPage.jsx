@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../core/config/routes.config';
 import { cartStore } from '../../stores/cart/cart.store';
 import { cartActions } from '../../stores/cart/cart.actions';
@@ -9,6 +9,7 @@ import { furnitureTypeNames } from '../../core/constants/product.constants';
 import './CartPage.css';
 
 const CartPage = observer(() => {
+  const navigate = useNavigate();
   const [promocodeInput, setPromocodeInput] = useState('');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
@@ -71,8 +72,7 @@ const CartPage = observer(() => {
   };
 
   const handleCheckout = () => {
-    // TODO: Переход к оформлению заказа
-    alert('Функция оформления заказа в разработке');
+    navigate(ROUTES.cart.checkout);
   };
 
   const { items, totalItems, totalPrice, discountedPrice, isEmpty, isLoading } = cartStore;

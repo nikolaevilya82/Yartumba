@@ -4,6 +4,7 @@ import { ROUTES } from '../core/config/routes.config';
 import CatalogPage from '../pages/catalog/CatalogPage';
 import ConfiguratorPage from '../pages/configurator/ConfiguratorPage';
 import CartPage from '../pages/cart/CartPage';
+import CheckoutPage from '../pages/cart/CheckoutPage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 
@@ -26,7 +27,7 @@ const AppRoutes = () => {
         
         {/* Корзина */}
         <Route path={ROUTES.cart.base} element={<CartPage />} />
-        <Route path={ROUTES.cart.checkout} element={<CartPage />} />
+        <Route path={ROUTES.cart.checkout} element={<CheckoutPage />} />
         
         {/* Авторизация */}
         <Route path={ROUTES.auth.login} element={<LoginPage />} />
