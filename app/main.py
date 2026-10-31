@@ -1,11 +1,14 @@
 """
 Главное приложение FastAPI
 """
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
+from app.core.dependencies import get_db
 
 app = FastAPI(
     title="Yartumba API",
@@ -34,5 +37,19 @@ async def root():
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(db: Session = Depends(get_db)):
+    """
+    Проверка работоспособности приложения и доступности БД.
+
+    Возвращает 200, если БД отвечает на `SELECT 1`,
+    иначе 503 с описанием проблемы.
+    """
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:  # noqa: BLE001 — нужен любой сбой БД
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database is unavailable: {exc}",
+        ) from exc
+
+    return {"status": "ok", "database": "ok"}

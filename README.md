@@ -45,7 +45,7 @@
 - **Database:** PostgreSQL 15+, Alembic (миграции)
 - **Frontend:** React 18+, Vite, TypeScript
 - **Testing:** 
-  - Backend: pytest, pytest-asyncio, coverage
+  - Backend: pytest, pytest-asyncio, pytest-cov
   - Frontend: Vitest, @testing-library/react, MSW
 
 ## 🧪 Тестирование
@@ -57,13 +57,13 @@
 python3 -m pytest tests/ -v
 
 # Запуск с покрытием
-python3 -m pytest tests/ -v --coverage
+python3 -m pytest tests/ -v --cov=app --cov-report=term-missing
 
 # Только unit тесты
 python3 -m pytest tests/goods/ tests/catalog/ tests/components/ -v
 ```
 
-**Статистика:** 176 тестов проходят ✅
+**Статистика:** 190 тестов проходят ✅
 
 ### Frontend
 
@@ -329,7 +329,7 @@ url = get_sheet_material_image_url(material.id, material.image_url)
 | Фронтенд (каталог) | ✅ Готово |
 | Фронтенд (конфигуратор) | 🟡 Заглушка |
 | Фронтенд (корзина) | ✅ Готово (MobX + API) |
-| Тесты бэкенда | ✅ 176 тестов |
+| Тесты бэкенда | ✅ 190 тестов |
 | Тесты фронтенда | ✅ 497 тестов |
 
 **Общий прогресс:** ~65-70%

@@ -14,6 +14,18 @@ from pydantic import BaseModel, Field, field_validator
 # CART SCHEMAS
 # ============================================================================
 
+FURNITURE_TYPES = ('bookshelf', 'nightstand', 'dresser')
+
+
+def validate_furniture_type(value: str) -> str:
+    """Проверить, что тип мебели поддерживается"""
+    if value not in FURNITURE_TYPES:
+        raise ValueError(
+            f'Неверный тип мебели. Допустимые: {", ".join(FURNITURE_TYPES)}'
+        )
+    return value
+
+
 class CartBase(BaseModel):
     """Базовая схема корзины - общие поля"""
     user_id: Optional[str] = Field(None, description="ID пользователя")
@@ -79,10 +91,7 @@ class CartItemCreate(BaseModel):
     @classmethod
     def validate_furniture_type(cls, v: str) -> str:
         """Валидация типа мебели"""
-        valid_types = ['bookshelf', 'nightstand', 'dresser']
-        if v not in valid_types:
-            raise ValueError(f'Неверный тип мебели. Допустимые: {", ".join(valid_types)}')
-        return v
+        return validate_furniture_type(v)
 
 
 class CartItemUpdate(BaseModel):
@@ -136,6 +145,12 @@ class AddToCartRequest(BaseModel):
     furniture_id: str = Field(..., description="ID мебели")
     configuration: Optional[Dict[str, Any]] = Field(None, description="Конфигурация")
     quantity: int = Field(1, ge=1, le=99, description="Количество")
+
+    @field_validator('furniture_type')
+    @classmethod
+    def validate_furniture_type(cls, v: str) -> str:
+        """Валидация типа мебели"""
+        return validate_furniture_type(v)
 
 
 class AddToCartResponse(BaseModel):

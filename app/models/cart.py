@@ -3,11 +3,11 @@
 Отвечает за хранение товаров в корзине пользователя
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, ForeignKey, Integer, Numeric, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.types import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from app.core.db_setup import Base
 
 
@@ -27,10 +27,14 @@ class Cart(Base):
     session_id = Column(String(255), nullable=True, index=True)
     
     # Дата создания
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Дата последнего обновления
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     
     def __repr__(self):
         return f"<Cart {self.id} user={self.user_id}>"
@@ -90,13 +94,22 @@ class CartItem(Base):
     materials_snapshot = Column(JSON, nullable=True)
     
     # Дата создания
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Дата последнего обновления
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     
-    # Ссылка на корзину
-    cart = relationship("Cart", backref="items")
+    # Ссылка на корзину.
+    # delete-orphan: при удалении корзины её позиции удаляются ORM-ом,
+    # иначе SQLAlchemy пытается обнулить cart_id (NOT NULL) и падает.
+    cart = relationship(
+        "Cart",
+        backref=backref("items", cascade="all, delete-orphan"),
+    )
 
     # Ссылка на Product (каталог)
     product = relationship("Product", lazy="joined")
@@ -114,16 +127,9 @@ class CartItem(Base):
         Returns:
             Bookshelf | Nightstand | Dresser | None
         """
-        if self.furniture_type == "bookshelf":
-            from app.models.goods import Bookshelf
-            return db.query(Bookshelf).filter(Bookshelf.id == self.furniture_id).first()
-        elif self.furniture_type == "nightstand":
-            from app.models.goods import Nightstand
-            return db.query(Nightstand).filter(Nightstand.id == self.furniture_id).first()
-        elif self.furniture_type == "dresser":
-            from app.models.goods import Dresser
-            return db.query(Dresser).filter(Dresser.id == self.furniture_id).first()
-        return None
+        from app.core.furniture_registry import get_furniture
+
+        return get_furniture(db, self.furniture_type, self.furniture_id)
     
     def recalculate_price(self, db):
         """
