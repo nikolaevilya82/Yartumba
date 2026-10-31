@@ -63,8 +63,8 @@ async def add_item_to_cart(
         # Получаем созданный/обновлённый элемент
         cart_item = None
         for item in updated_cart.items:
-            if (item.furniture_type == request.furniture_type and 
-                item.furniture_id == request.furniture_id):
+            if (item.furniture_type == request.furniture_type and
+                str(item.furniture_id) == str(request.furniture_id)):
                 cart_item = item
                 break
         

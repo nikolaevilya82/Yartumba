@@ -12,6 +12,11 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
+# Покрытие тестами
+.coverage
+.coverage.*
+htmlcov/
+
 # IDE
 .idea/
 .vscode/

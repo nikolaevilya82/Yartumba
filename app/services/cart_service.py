@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.cart import Cart, CartItem
-from app.models.goods import Bookshelf, Nightstand, Dresser
+from app.core.furniture_registry import get_furniture
+from app.core.identifiers import to_uuid
 from app.api.v1.goods.cart.schemas import CartItemCreate
 
 
@@ -40,7 +41,7 @@ class CartService:
         """
         # Приоритет 1: Ищем корзину пользователя
         if user_id:
-            cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+            cart = db.query(Cart).filter(Cart.user_id == to_uuid(user_id)).first()
             if cart:
                 return cart
         
@@ -50,7 +51,7 @@ class CartService:
             if cart:
                 # Если есть user_id, привязываем корзину к пользователю
                 if user_id:
-                    cart.user_id = user_id
+                    cart.user_id = to_uuid(user_id)
                     cart.session_id = None  # Убираем session_id после логина
                     db.commit()
                     db.refresh(cart)
@@ -70,7 +71,7 @@ class CartService:
         Returns:
             Cart | None: Корзина или None
         """
-        return db.query(Cart).filter(Cart.user_id == user_id).first()
+        return db.query(Cart).filter(Cart.user_id == to_uuid(user_id)).first()
 
     def get_cart_by_session_id(self, db: Session, session_id: str) -> Optional[Cart]:
         """
@@ -129,7 +130,7 @@ class CartService:
         5. Вернуть обновленную корзину
         """
         # 1. Проверить существование корзины
-        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        cart = db.query(Cart).filter(Cart.id == to_uuid(cart_id)).first()
         if not cart:
             raise ValueError(f"Корзина {cart_id} не найдена")
         
@@ -145,7 +146,7 @@ class CartService:
                 f"Товар {item_data.furniture_type} не привязан к каталогу (product_id отсутствует)"
             )
         
-        product_id = str(furniture.product_id)
+        product_id = furniture.product_id
         
         # 3. Получить актуальную цену
         unit_price = self._get_furniture_price(db, furniture)
@@ -157,10 +158,10 @@ class CartService:
         
         # 4. Ищем существующий товар в корзине
         existing_item = db.query(CartItem).filter(
-            CartItem.cart_id == cart_id,
+            CartItem.cart_id == to_uuid(cart_id),
             CartItem.furniture_type == item_data.furniture_type,
-            CartItem.furniture_id == item_data.furniture_id,
-            CartItem.configuration_id == item_data.configuration_id
+            CartItem.furniture_id == to_uuid(item_data.furniture_id),
+            CartItem.configuration_id == to_uuid(item_data.configuration_id)
         ).first()
         
         if existing_item:
@@ -173,11 +174,11 @@ class CartService:
         else:
             # 6. Создаём новый CartItem
             cart_item = CartItem(
-                cart_id=cart_id,
+                cart_id=to_uuid(cart_id),
                 product_id=product_id,
                 furniture_type=item_data.furniture_type,
-                furniture_id=item_data.furniture_id,
-                configuration_id=item_data.configuration_id,
+                furniture_id=to_uuid(item_data.furniture_id),
+                configuration_id=to_uuid(item_data.configuration_id),
                 quantity=item_data.quantity,
                 unit_price=unit_price,
                 total_price=unit_price * item_data.quantity,
@@ -221,8 +222,8 @@ class CartService:
         """
         # 1. Найти позицию
         cart_item = db.query(CartItem).filter(
-            CartItem.id == item_id,
-            CartItem.cart_id == cart_id
+            CartItem.id == to_uuid(item_id),
+            CartItem.cart_id == to_uuid(cart_id)
         ).first()
         
         if not cart_item:
@@ -239,7 +240,7 @@ class CartService:
         # 4. Сохранить и вернуть корзину
         db.commit()
         
-        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        cart = db.query(Cart).filter(Cart.id == to_uuid(cart_id)).first()
         db.refresh(cart)
         
         return cart
@@ -261,8 +262,8 @@ class CartService:
         """
         # Найти и удалить позицию
         cart_item = db.query(CartItem).filter(
-            CartItem.id == item_id,
-            CartItem.cart_id == cart_id
+            CartItem.id == to_uuid(item_id),
+            CartItem.cart_id == to_uuid(cart_id)
         ).first()
         
         if not cart_item:
@@ -271,7 +272,7 @@ class CartService:
         db.delete(cart_item)
         db.commit()
         
-        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        cart = db.query(Cart).filter(Cart.id == to_uuid(cart_id)).first()
         db.refresh(cart)
         
         return cart
@@ -288,10 +289,10 @@ class CartService:
             Cart: Пустая корзина
         """
         # Удаляем все позиции
-        db.query(CartItem).filter(CartItem.cart_id == cart_id).delete()
+        db.query(CartItem).filter(CartItem.cart_id == to_uuid(cart_id)).delete()
         db.commit()
         
-        cart = db.query(Cart).filter(Cart.id == cart_id).first()
+        cart = db.query(Cart).filter(Cart.id == to_uuid(cart_id)).first()
         db.refresh(cart)
         
         return cart
@@ -312,7 +313,7 @@ class CartService:
             Decimal: Подытог корзины
         """
         result = db.query(func.sum(CartItem.total_price)).filter(
-            CartItem.cart_id == cart_id
+            CartItem.cart_id == to_uuid(cart_id)
         ).first()
         
         return result[0] or Decimal("0.00")
@@ -329,7 +330,7 @@ class CartService:
             int: Общее количество товаров
         """
         result = db.query(func.sum(CartItem.quantity)).filter(
-            CartItem.cart_id == cart_id
+            CartItem.cart_id == to_uuid(cart_id)
         ).first()
         
         return result[0] or 0
@@ -432,13 +433,7 @@ class CartService:
         Returns:
             Bookshelf | Nightstand | Dresser | None
         """
-        if furniture_type == "bookshelf":
-            return db.query(Bookshelf).filter(Bookshelf.id == furniture_id).first()
-        elif furniture_type == "nightstand":
-            return db.query(Nightstand).filter(Nightstand.id == furniture_id).first()
-        elif furniture_type == "dresser":
-            return db.query(Dresser).filter(Dresser.id == furniture_id).first()
-        return None
+        return get_furniture(db, furniture_type, furniture_id)
 
     def _get_furniture_price(
         self,

@@ -9,6 +9,7 @@ from pydantic import UUID4
 from sqlalchemy.orm import Session
 
 from app.api.v1.goods.dependencies import get_db
+from app.core.identifiers import to_uuid
 from app.models.cart import Cart, CartItem
 from app.services.cart_service import CartService
 
@@ -184,8 +185,8 @@ def get_cart_item_by_id(
         HTTPException: 404 если товар не найден
     """
     cart_item = db.query(CartItem).filter(
-        CartItem.id == item_id,
-        CartItem.cart_id == cart_id,
+        CartItem.id == to_uuid(item_id),
+        CartItem.cart_id == to_uuid(cart_id),
     ).first()
     
     if not cart_item:
